@@ -1,0 +1,22 @@
+{
+  "name": "shortcut-cli-skill",
+  "owner": {
+    "name": "hefgi",
+    "email": ""
+  },
+  "metadata": {
+    "description": "Claude skill for interacting with Shortcut stories and epics via the official shortcut-cli tool",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "shortcut",
+      "description": "Work with Shortcut stories and epics - view, search, create, and update",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./shortcut"
+      ]
+    }
+  ]
+}
