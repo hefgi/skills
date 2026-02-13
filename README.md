@@ -24,9 +24,6 @@ The skill will then be available for working with Shortcut stories directly thro
 ### Install the Shortcut CLI
 
 ```bash
-# Via Homebrew (recommended)
-brew install shortcut-cli
-
 # Or via npm
 npm install -g shortcut-cli
 ```
