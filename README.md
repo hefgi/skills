@@ -7,6 +7,7 @@ A collection of Claude Code skills for various tools and services.
 | Skill | Description | Invocation |
 |-------|-------------|------------|
 | [shortcut](./shortcut/) | Interact with Shortcut stories and epics via the `short` CLI | `/shortcut` |
+| [ponder](./ponder/) | Build EVM blockchain data indexers using Ponder (ponder.sh) | `/ponder` |
 
 ## Installation
 

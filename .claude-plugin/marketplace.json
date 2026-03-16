@@ -17,6 +17,15 @@
       "skills": [
         "./shortcut"
       ]
+    },
+    {
+      "name": "ponder",
+      "description": "Build EVM blockchain data indexers using Ponder (ponder.sh) - index smart contract events into queryable databases with type-safe APIs",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./ponder"
+      ]
     }
   ]
 }
