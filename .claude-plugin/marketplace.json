@@ -1,11 +1,11 @@
 {
-  "name": "shortcut-cli-skill",
+  "name": "skills",
   "owner": {
     "name": "hefgi",
     "email": ""
   },
   "metadata": {
-    "description": "Claude skill for interacting with Shortcut stories and epics via the official shortcut-cli tool",
+    "description": "A collection of Claude Code skills for various tools and services",
     "version": "1.0.0"
   },
   "plugins": [

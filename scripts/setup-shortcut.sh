@@ -28,4 +28,4 @@ if ! short search -o me &> /dev/null; then
     exit 0
 fi
 
-echo "Setup complete! Shortcut CLI is installed and authenticated."
+echo "Shortcut CLI is installed and authenticated."
