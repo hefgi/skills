@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent creates stories using the correct minimum required flags, handles optional fields properly, formats creation output with the new item URL, and presents the confirmation in the expected format.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Create uses -t flag",
+      "max_score": 8,
+      "description": "Story creation command includes the `-t \"<title>\"` flag for the title"
+    },
+    {
+      "name": "Create uses -s flag",
+      "max_score": 8,
+      "description": "Story creation command includes the `-s \"<state>\"` flag for the workflow state"
+    },
+    {
+      "name": "User strings quoted",
+      "max_score": 10,
+      "description": "All user-provided strings (title, description, state, etc.) are wrapped in double quotes in the CLI command"
+    },
+    {
+      "name": "Description flag used",
+      "max_score": 7,
+      "description": "Story description is passed using the `-d \"<description>\"` flag when a description is provided"
+    },
+    {
+      "name": "Story type flag used",
+      "max_score": 7,
+      "description": "Story type (feature/bug/chore) is passed using `-y \"<type>\"` when a type is specified"
+    },
+    {
+      "name": "Epic assignment flag",
+      "max_score": 7,
+      "description": "Uses `--epic <id>` to assign a story to an epic when an epic is specified"
+    },
+    {
+      "name": "Owner flag used",
+      "max_score": 7,
+      "description": "Uses `--owner \"<mention>\"` to assign an owner when one is specified"
+    },
+    {
+      "name": "Success message with URL",
+      "max_score": 10,
+      "description": "After creation, the output includes a success message that contains the new story's URL"
+    },
+    {
+      "name": "Prerequisite check first",
+      "max_score": 8,
+      "description": "Runs `which short && short --version` (or equivalent) before creating any stories"
+    },
+    {
+      "name": "Follow-up suggestions",
+      "max_score": 8,
+      "description": "After reporting the successful creation, at least one relevant follow-up action is suggested"
+    },
+    {
+      "name": "No auto-install on missing CLI",
+      "max_score": 10,
+      "description": "If CLI is missing, provides installation instructions but does NOT run any install command automatically"
+    },
+    {
+      "name": "Label flag used",
+      "max_score": 10,
+      "description": "Uses `--label \"<label>\"` to add a label when one is provided"
+    }
+  ]
+}

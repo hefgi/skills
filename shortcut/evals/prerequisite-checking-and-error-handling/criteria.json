@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly verifies CLI prerequisites, handles the case where the CLI is absent or outdated, avoids auto-installing software, and handles error conditions including auth failures and Node.js version requirements.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Version check command",
+      "max_score": 10,
+      "description": "Uses `which short && short --version` (or an equivalent two-step command) to check for the CLI and its version"
+    },
+    {
+      "name": "No auto-install",
+      "max_score": 12,
+      "description": "Does NOT automatically run any install command (e.g., brew install, npm install) when the CLI is missing; only shows installation instructions"
+    },
+    {
+      "name": "Upgrade command accuracy",
+      "max_score": 8,
+      "description": "When version < 5.0.0, provides BOTH the brew upgrade command (`brew upgrade shortcut-cli`) AND the npm update command (`npm update -g @shortcut-cli/shortcut-cli`)"
+    },
+    {
+      "name": "Stop after missing CLI",
+      "max_score": 10,
+      "description": "When CLI is not found, the documented flow STOPS after showing installation instructions rather than attempting to continue with Shortcut operations"
+    },
+    {
+      "name": "Auth failure guidance",
+      "max_score": 10,
+      "description": "For an 'unauthorized' or 'invalid token' error, directs the user to run `short install` (not other commands like `short auth` or `short login`)"
+    },
+    {
+      "name": "Not-found ID handling",
+      "max_score": 8,
+      "description": "When a story/epic returns 'not found', the response both confirms the ID used AND suggests using search to find the item"
+    },
+    {
+      "name": "Node.js version requirement",
+      "max_score": 10,
+      "description": "ESM/import errors or 'unsupported engine' output is attributed to Node.js version and the response states Node.js >= 20.19.0 is required"
+    },
+    {
+      "name": "Network error guidance",
+      "max_score": 7,
+      "description": "A timeout or connection error results in guidance to check the network connection (not to retry automatically)"
+    },
+    {
+      "name": "Prerequisite check before operation",
+      "max_score": 10,
+      "description": "The script/plan checks prerequisites BEFORE attempting any Shortcut data operation"
+    },
+    {
+      "name": "Minimum Node version stated",
+      "max_score": 8,
+      "description": "Installation instructions include the minimum Node.js version requirement (20.19.0)"
+    },
+    {
+      "name": "Homebrew install shown",
+      "max_score": 7,
+      "description": "Installation instructions include the Homebrew option (`brew install shortcut-cli`)"
+    }
+  ]
+}

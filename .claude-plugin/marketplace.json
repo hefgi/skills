@@ -11,7 +11,7 @@
   "plugins": [
     {
       "name": "shortcut",
-      "description": "Work with Shortcut stories and epics - view, search, create, and update",
+      "description": "Work with Shortcut stories, epics, objectives, iterations, docs, labels, and teams - view, search, create, and update",
       "source": "./",
       "strict": false,
       "skills": [

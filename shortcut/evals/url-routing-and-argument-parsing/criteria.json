@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly routes different argument patterns when interacting with Shortcut — including Shortcut app URLs, bare numeric IDs, and the 'my' shortcut — using the CLI instead of WebFetch and following the correct routing priority.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Prerequisite check command",
+      "max_score": 8,
+      "description": "Runs `which short && short --version` (or equivalent two-command check) before issuing any operational command"
+    },
+    {
+      "name": "Story URL extraction",
+      "max_score": 10,
+      "description": "For a URL like `app.shortcut.com/org/story/12345`, extracts the numeric ID and calls `short story 12345` rather than using WebFetch or curl on the URL"
+    },
+    {
+      "name": "Epic URL extraction",
+      "max_score": 10,
+      "description": "For a URL like `app.shortcut.com/org/epic/67890`, extracts the numeric ID and calls `short epic view 67890` rather than using WebFetch or curl on the URL"
+    },
+    {
+      "name": "No WebFetch on Shortcut URLs",
+      "max_score": 10,
+      "description": "Does NOT use WebFetch, curl, or browser-fetch calls on any app.shortcut.com URL"
+    },
+    {
+      "name": "Numeric ID routing",
+      "max_score": 8,
+      "description": "A bare numeric argument (e.g. `42`) is treated as a story ID and passed to `short story 42`"
+    },
+    {
+      "name": "My stories routing",
+      "max_score": 8,
+      "description": "The argument `my` is routed to `short search -o me`"
+    },
+    {
+      "name": "Story details fields",
+      "max_score": 10,
+      "description": "Story/epic output includes all of: ID, title, state, owner, description, and URL"
+    },
+    {
+      "name": "Follow-up suggestions",
+      "max_score": 8,
+      "description": "After presenting results, the response includes at least one relevant follow-up action suggestion"
+    },
+    {
+      "name": "List output routing",
+      "max_score": 8,
+      "description": "The `list` argument is routed to `short search` with no filters"
+    },
+    {
+      "name": "Search text routing",
+      "max_score": 8,
+      "description": "A `search <text>` argument is routed to `short search -t \"<text>\"`"
+    },
+    {
+      "name": "Correct CLI tool used",
+      "max_score": 12,
+      "description": "All Shortcut data retrieval uses the `short` CLI, not the Shortcut REST API directly via curl/fetch without the CLI"
+    }
+  ]
+}

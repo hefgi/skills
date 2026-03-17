@@ -1,8 +1,8 @@
 {
   "name": "hefgi/shortcut",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": false,
-  "summary": "Interact with Shortcut - view, search, update, and create stories and epics using the short CLI. IMPORTANT - When you see URLs matching `app.shortcut.com/*`, use this skill instead of WebFetch.",
+  "summary": "Interact with Shortcut - view, search, update, and create stories, epics, objectives, iterations, docs, labels, and teams using the short CLI. IMPORTANT - When you see URLs matching `app.shortcut.com/*`, use this skill instead of WebFetch.",
   "skills": {
     "shortcut": {
       "path": "SKILL.md"

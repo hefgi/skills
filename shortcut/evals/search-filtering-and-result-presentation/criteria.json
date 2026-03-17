@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent uses the correct search flags and filter combinations, presents search results as a properly formatted numbered list with required fields, presents list-style data as a formatted table, and suggests follow-up actions.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Text search flag",
+      "max_score": 8,
+      "description": "Text search uses `short search -t \"<text>\"` with the `-t` flag (not positional argument or other flag)"
+    },
+    {
+      "name": "Owner filter flag",
+      "max_score": 8,
+      "description": "Filtering by owner uses `-o \"<mention>\"` (or `-o me` for current user)"
+    },
+    {
+      "name": "State filter flag",
+      "max_score": 8,
+      "description": "Filtering by workflow state uses `-s \"<state>\"`"
+    },
+    {
+      "name": "Label filter flag",
+      "max_score": 8,
+      "description": "Filtering by label uses `-l \"<label>\"`"
+    },
+    {
+      "name": "Combined filters",
+      "max_score": 9,
+      "description": "Multiple filter conditions are combined in a single `short search` command rather than running multiple separate searches"
+    },
+    {
+      "name": "Numbered list format",
+      "max_score": 10,
+      "description": "Search results are presented as a numbered list (1., 2., 3., etc.) rather than bullet points, tables, or plain lines"
+    },
+    {
+      "name": "ID in results",
+      "max_score": 8,
+      "description": "Each search result entry includes the story ID"
+    },
+    {
+      "name": "Title in results",
+      "max_score": 7,
+      "description": "Each search result entry includes the story title"
+    },
+    {
+      "name": "State in results",
+      "max_score": 7,
+      "description": "Each search result entry includes the story state"
+    },
+    {
+      "name": "List formatted as table",
+      "max_score": 8,
+      "description": "When listing labels, teams, iterations, or projects (non-search collections), output is presented as a formatted table rather than a numbered list or plain text"
+    },
+    {
+      "name": "Follow-up suggestions present",
+      "max_score": 9,
+      "description": "After presenting each set of results, the response suggests at least one relevant follow-up action"
+    },
+    {
+      "name": "Prerequisite check",
+      "max_score": 10,
+      "description": "Runs `which short && short --version` before any search operation"
+    }
+  ]
+}

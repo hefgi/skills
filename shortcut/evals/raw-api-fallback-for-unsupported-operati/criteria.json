@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly falls back to the raw API via `short api` when an operation is not available as a dedicated CLI command, uses the correct HTTP method flags, and references the Swagger spec for endpoint discovery.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Uses short api command",
+      "max_score": 12,
+      "description": "Uses `short api <path>` for the raw API request rather than curl, wget, or direct HTTP calls"
+    },
+    {
+      "name": "Correct HTTP method flag",
+      "max_score": 10,
+      "description": "Uses `-X POST`, `-X PUT`, or `-X DELETE` flags with `short api` when the operation requires a non-GET method"
+    },
+    {
+      "name": "Field flag for POST/PUT",
+      "max_score": 10,
+      "description": "Uses `-f \"key=value\"` flag(s) to pass request body fields in POST or PUT operations via `short api`"
+    },
+    {
+      "name": "Prerequisite check",
+      "max_score": 8,
+      "description": "Runs `which short && short --version` before attempting any API calls"
+    },
+    {
+      "name": "Swagger spec referenced",
+      "max_score": 8,
+      "description": "Documents or mentions the Swagger spec (`references/shortcut.swagger.json` or equivalent) as the source for API endpoint paths"
+    },
+    {
+      "name": "No auto-install",
+      "max_score": 8,
+      "description": "Does NOT automatically run any install command if the CLI is missing"
+    },
+    {
+      "name": "User strings quoted",
+      "max_score": 8,
+      "description": "All user-provided string values in `short api` field arguments are properly quoted"
+    },
+    {
+      "name": "Auth failure guidance",
+      "max_score": 8,
+      "description": "If an auth error is described or encountered, the response directs the user to `short install` (not other auth commands)"
+    },
+    {
+      "name": "Success message with URL",
+      "max_score": 8,
+      "description": "After a successful creation via the API, a success message or confirmation is shown that includes the item URL or ID"
+    },
+    {
+      "name": "Follow-up suggestions",
+      "max_score": 8,
+      "description": "After presenting results or a success confirmation, at least one relevant follow-up action is suggested"
+    },
+    {
+      "name": "GET request format",
+      "max_score": 12,
+      "description": "GET requests use `short api <path>` with no `-X` flag (relying on GET as the default method)"
+    }
+  ]
+}

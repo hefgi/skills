@@ -3,6 +3,23 @@ set -e
 
 echo "Setting up Shortcut CLI skill..."
 
+# Check Node.js version (>= 20.19.0 required)
+if command -v node &> /dev/null; then
+    NODE_VERSION=$(node -v | sed 's/v//')
+    NODE_MAJOR=$(echo "$NODE_VERSION" | cut -d. -f1)
+    NODE_MINOR=$(echo "$NODE_VERSION" | cut -d. -f2)
+    if [ "$NODE_MAJOR" -lt 20 ] || { [ "$NODE_MAJOR" -eq 20 ] && [ "$NODE_MINOR" -lt 19 ]; }; then
+        echo ""
+        echo "Warning: Node.js >= 20.19.0 is required. Found v${NODE_VERSION}."
+        echo "Please upgrade Node.js before installing shortcut-cli."
+        exit 0
+    fi
+else
+    echo ""
+    echo "Warning: Node.js is not installed. Node.js >= 20.19.0 is required."
+    exit 0
+fi
+
 # Check if short CLI is installed
 if ! command -v short &> /dev/null; then
     echo ""
@@ -12,7 +29,7 @@ if ! command -v short &> /dev/null; then
     echo "  brew install shortcut-cli"
     echo ""
     echo "Or via npm:"
-    echo "  npm install -g shortcut-cli"
+    echo "  npm install -g @shortcut-cli/shortcut-cli"
     echo ""
     echo "After installation, run 'short install' to authenticate."
     exit 0
