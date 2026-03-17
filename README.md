@@ -11,11 +11,25 @@ A collection of Claude Code skills for various tools and services.
 
 ## Installation
 
-Install skills in Claude Code using the plugin marketplace:
+### Using Claude Code
 
 ```bash
 claude plugin marketplace add hefgi/skills
 claude plugin install <skill-name>
+```
+
+### Using Tessl
+
+```bash
+npx tessl i hefgi/shortcut
+npx tessl i hefgi/ponder
+```
+
+### Using Skills.sh
+
+```bash
+npx skills add https://github.com/hefgi/skills --skill shortcut
+npx skills add https://github.com/hefgi/skills --skill ponder
 ```
 
 ## Adding a New Skill
