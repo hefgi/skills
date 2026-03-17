@@ -9920,6 +9920,7 @@
       "type": "object",
       "properties": {
         "name": {
+          "maxLength": 128,
           "minLength": 1,
           "description": "The new name of the Category.",
           "type": "string"
@@ -10013,6 +10014,24 @@
         "color_key": {
           "description": "A color key associated with this EnumValue within the CustomField's domain.",
           "type": "string",
+          "enum": [
+            "blue",
+            "purple",
+            "midnight-blue",
+            "orange",
+            "yellow-green",
+            "brass",
+            "gray",
+            "fuchsia",
+            "yellow",
+            "pink",
+            "sky-blue",
+            "green",
+            "red",
+            "black",
+            "slate",
+            "turquoise"
+          ],
           "x-nullable": true
         },
         "enabled": {
@@ -14565,6 +14584,27 @@
         "operationId": "listMembers",
         "description": "Returns information about members of the Workspace.",
         "summary": "List Members"
+      }
+    },
+    "/api/v3/members/slim": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Resource"
+          },
+          "400": {
+            "description": "Schema mismatch"
+          },
+          "404": {
+            "description": "Resource does not exist"
+          },
+          "422": {
+            "description": "Unprocessable"
+          }
+        },
+        "operationId": "listMembersSlim",
+        "description": "Returns minimal member data optimized for Korey integration. Includes only active (non-disabled) members.",
+        "summary": "List Members (slim)"
       }
     },
     "/api/v3/members/{member-public-id}": {
