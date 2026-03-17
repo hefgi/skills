@@ -4,10 +4,10 @@ A collection of AI coding agent skills for various tools and services.
 
 ## Skills
 
-| Skill | Description | Invocation |
-|-------|-------------|------------|
-| [shortcut](./shortcut/) | Interact with Shortcut stories and epics via the `short` CLI | `/shortcut` |
-| [ponder](./ponder/) | Build EVM blockchain data indexers using Ponder (ponder.sh) | `/ponder` |
+| Skill | Description | Invocation | Score |
+|-------|-------------|------------|-------|
+| [shortcut](./shortcut/) | Interact with Shortcut stories and epics via the `short` CLI | `/shortcut` | [![tessl](https://img.shields.io/endpoint?url=https%3A%2F%2Fapi.tessl.io%2Fv1%2Fbadges%2Fhefgi%2Fshortcut)](https://tessl.io/registry/hefgi/shortcut) |
+| [ponder](./ponder/) | Build EVM blockchain data indexers using Ponder (ponder.sh) | `/ponder` | [![tessl](https://img.shields.io/endpoint?url=https%3A%2F%2Fapi.tessl.io%2Fv1%2Fbadges%2Fhefgi%2Fponder)](https://tessl.io/registry/hefgi/ponder) |
 
 ## Installation
 
