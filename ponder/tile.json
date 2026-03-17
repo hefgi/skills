@@ -1,0 +1,11 @@
+{
+  "name": "hefgi/ponder",
+  "version": "0.1.0",
+  "private": true,
+  "summary": "Build EVM blockchain data indexers using Ponder (ponder.sh) - an open-source TypeScript framework for indexing smart contract events, transactions, and traces into custom database schemas with type-safe APIs. Use when the user mentions ponder, blockchain/EVM indexing, onchain data pipelines, subgraph replacement, or wants to index smart contract events into a queryable database.\n",
+  "skills": {
+    "ponder": {
+      "path": "SKILL.md"
+    }
+  }
+}
