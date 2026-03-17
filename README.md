@@ -1,6 +1,6 @@
 # Hefgi Skills
 
-A collection of Claude Code skills for various tools and services.
+A collection of AI coding agent skills for various tools and services.
 
 ## Skills
 
