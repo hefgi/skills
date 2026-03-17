@@ -36,6 +36,6 @@ npx skills add https://github.com/hefgi/skills --skill ponder
 
 1. Create a new folder: `my-skill/`
 2. Add a `SKILL.md` with frontmatter (name, description, invocations, tags, version)
-3. Add any reference files in `my-skill/reference/`
-4. Register the skill in `.claude-plugin/marketplace.json`
-5. Optionally add a setup script and register it in `conductor.json`
+3. Add a `tile.json` with the skill metadata (name, version, summary, skill path)
+4. Add any reference files in `my-skill/references/`
+5. Update the Skills table in this README
