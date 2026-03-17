@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly configures multi-chain indexing, selects the right ordering mode for cross-chain consistency, uses chain-aware env vars, distinguishes chains in handlers, and combines GraphQL with custom Hono routes.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Omnichain ordering",
+      "description": "Config uses ordering: 'omnichain' since cross-chain consistency is required for bridge matching",
+      "max_score": 12
+    },
+    {
+      "name": "Both chains configured",
+      "description": "ponder.config.ts defines both mainnet (id: 1) and Base (id: 8453) in the chains object",
+      "max_score": 8
+    },
+    {
+      "name": "Chain-specific RPC vars",
+      "description": "Uses PONDER_RPC_URL_1 and PONDER_RPC_URL_8453 for the two chains (not generic names)",
+      "max_score": 10
+    },
+    {
+      "name": "Chain distinction in handler",
+      "description": "Handler uses context.chain.id to identify which chain an event came from",
+      "max_score": 10
+    },
+    {
+      "name": "Correct startBlocks",
+      "description": "Contract config sets startBlock per chain (18500000 for mainnet, 6800000 for Base), not 0",
+      "max_score": 8
+    },
+    {
+      "name": "Hex for addresses",
+      "description": "Schema uses t.hex() for sender and recipient address columns",
+      "max_score": 8
+    },
+    {
+      "name": "Bigint for amount",
+      "description": "Schema uses t.bigint() for the transfer amount column",
+      "max_score": 8
+    },
+    {
+      "name": "Query indexes",
+      "description": "Schema includes indexes on at least one of: sender, recipient, or chain ID columns",
+      "max_score": 8
+    },
+    {
+      "name": "Custom Hono route",
+      "description": "API file includes at least one custom Hono route (app.get) for the volume summary endpoint, separate from GraphQL",
+      "max_score": 10
+    },
+    {
+      "name": "Read-only API db",
+      "description": "API route imports db from 'ponder:api' (read-only) and does NOT use context.db or attempt writes",
+      "max_score": 10
+    },
+    {
+      "name": "ABI as const",
+      "description": "Bridge ABI file exports with `as const` assertion",
+      "max_score": 8
+    }
+  ]
+}

@@ -1,0 +1,178 @@
+{
+  "instructions": [
+    {
+      "instruction": "Use `pnpm create ponder` to scaffold new projects",
+      "original_snippets": "pnpm create ponder  # also: npm, yarn, bun",
+      "relevant_when": "Setting up a new Ponder project from scratch",
+      "why_given": "reminder"
+    },
+    {
+      "instruction": "Use exact tsconfig.json with strict, noUncheckedIndexedAccess, target ES2022, module ES2022, moduleResolution bundler",
+      "original_snippets": "\"strict\": true, \"noUncheckedIndexedAccess\": true, \"target\": \"ES2022\", \"module\": \"ES2022\", \"moduleResolution\": \"bundler\"",
+      "relevant_when": "Creating or configuring a Ponder project's TypeScript settings",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "ponder-env.d.ts must exist at project root, generated via `ponder codegen`",
+      "original_snippets": "Must exist at project root. Run `ponder codegen` to generate it. ... `ponder-env.d.ts` must exist and be current. Run `ponder codegen` after config changes.",
+      "relevant_when": "Setting up or modifying a Ponder project",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "Environment variables must follow pattern PONDER_RPC_URL_<CHAIN_ID>",
+      "original_snippets": "`PONDER_RPC_URL_<CHAIN_ID>` - RPC endpoint per chain (e.g., `PONDER_RPC_URL_1` for mainnet)",
+      "relevant_when": "Configuring RPC endpoints for chains",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "ABIs must use `as const` assertion for type inference",
+      "original_snippets": "ABIs MUST use `as const` assertion for type inference: export const MyAbi = [...] as const; // REQUIRED",
+      "relevant_when": "Adding or defining contract ABIs",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "Set startBlock to contract deployment block, not 0",
+      "original_snippets": "Set `startBlock` to the contract deployment block, NOT `0`. Setting `0` scans entire chain history (hours vs seconds).",
+      "relevant_when": "Configuring contracts in ponder.config.ts",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "Table and schema names must be snake_case, max 45 characters",
+      "original_snippets": "Table/schema names: `snake_case`, max 45 characters.",
+      "relevant_when": "Defining tables in ponder.schema.ts",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "Use composite primary keys instead of string concatenation for composite keys",
+      "original_snippets": "ANTI-PATTERN: String concatenation for composite keys (`${owner}-${spender}`). USE: `primaryKey({ columns: [table.owner, table.spender] })`.",
+      "relevant_when": "Defining tables with multi-field identifiers",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "All addresses are lowercase, never use checksummed addresses",
+      "original_snippets": "All addresses are lowercase since v0.12. Never use checksummed addresses.",
+      "relevant_when": "Working with Ethereum addresses in schema or indexing",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "Use t.hex() for addresses and byte data, t.bigint() for uint256/int256",
+      "original_snippets": "Use `t.hex()` for addresses and byte data, `t.bigint()` for uint256/int256.",
+      "relevant_when": "Defining column types in schema",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "Always add indexes on columns used in GraphQL filters or API WHERE clauses",
+      "original_snippets": "Always add indexes on columns used in GraphQL filters or API WHERE clauses.",
+      "relevant_when": "Defining schema tables that will be queried",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "Use virtual module imports (ponder:registry, ponder:schema, ponder:api) not file paths",
+      "original_snippets": "Virtual module imports: `ponder:registry`, `ponder:schema`, `ponder:api`. NOT regular file paths.",
+      "relevant_when": "Writing indexing functions or API routes",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "Use context.db (read-write) in indexing functions, db from ponder:api (read-only) in API routes",
+      "original_snippets": "`context.db` (indexing functions, read-write) vs `db` from `ponder:api` (API routes, read-only). ... ANTI-PATTERN: Writing to database in API routes. `db` from `ponder:api` is read-only.",
+      "relevant_when": "Writing indexing functions or API routes",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "Always prefer Store API (context.db) over raw SQL in indexing functions",
+      "original_snippets": "**Store API** (`context.db`): Always prefer in indexing functions. 100-1000x faster (batched writes). ... **Raw SQL** (`db.sql`): Only for complex multi-table updates that Store API cannot express.",
+      "relevant_when": "Writing database operations in indexing functions",
+      "why_given": "particular preference"
+    },
+    {
+      "instruction": "Use factory() for dynamically created contracts, explicit address for known addresses",
+      "original_snippets": "**`factory()`**: Contract instances created dynamically at runtime (Uniswap pools, token clones). ... **Explicit `address`**: Known addresses at config time.",
+      "relevant_when": "Configuring contracts that are created by factory patterns",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "Use events by default for indexing, call traces only when function inputs/outputs not emitted as events",
+      "original_snippets": "**Events**: Default choice for most indexing use cases. ... **Call traces** (`includeCallTraces: true`): Only when you need function inputs/outputs not emitted as events.",
+      "relevant_when": "Choosing between events and call traces for indexing",
+      "why_given": "particular preference"
+    },
+    {
+      "instruction": "ponder start requires --schema flag or DATABASE_SCHEMA env var",
+      "original_snippets": "`ponder start` requires `--schema` flag (or `DATABASE_SCHEMA` env var).",
+      "relevant_when": "Deploying to production",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "Use onchainTable for data written by indexing, onchainView for query-time aggregations",
+      "original_snippets": "**Table** (`onchainTable`): Data written by indexing functions. Source of truth. ... **View** (`onchainView`): Aggregations/rollups computed at query time. No writes, no store API.",
+      "relevant_when": "Deciding between tables and views in schema",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "For factory contracts, use event.log.address to get which child contract emitted the event",
+      "original_snippets": "Factory contracts: use `event.log.address` to get which child contract emitted the event.",
+      "relevant_when": "Writing handlers for factory-created contracts",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "Use context.chain.id to distinguish chains in multi-chain shared handlers",
+      "original_snippets": "Multi-chain shared handlers: use `context.chain.id` to distinguish chains.",
+      "relevant_when": "Writing handlers that process events from multiple chains",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "Set disableCache: true for local dev nodes (Anvil/Hardhat)",
+      "original_snippets": "Local dev nodes (Anvil/Hardhat): set `disableCache: true` in chain config.",
+      "relevant_when": "Configuring Ponder to work with local development chains",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "Use GraphQL middleware for standard CRUD, custom Hono routes for complex queries",
+      "original_snippets": "**GraphQL middleware**: Standard CRUD with built-in filtering, sorting, pagination. ... **Custom Hono routes**: Complex joins, aggregations, non-standard responses, or non-GraphQL APIs.",
+      "relevant_when": "Setting up API endpoints",
+      "why_given": "particular preference"
+    },
+    {
+      "instruction": "Import createConfig from ponder, http from viem for config",
+      "original_snippets": "import { createConfig } from \"ponder\"; import { http } from \"viem\";",
+      "relevant_when": "Writing ponder.config.ts",
+      "why_given": "reminder"
+    },
+    {
+      "instruction": "Import onchainTable from ponder for schema definitions",
+      "original_snippets": "import { onchainTable } from \"ponder\";",
+      "relevant_when": "Writing ponder.schema.ts",
+      "why_given": "reminder"
+    },
+    {
+      "instruction": "Architecture follows: ponder.config.ts -> ponder.schema.ts -> src/*.ts -> src/api/index.ts",
+      "original_snippets": "**Architecture flow:** `ponder.config.ts` (what to index) -> `ponder.schema.ts` (where to store) -> `src/*.ts` (how to transform) -> `src/api/index.ts` (how to query)",
+      "relevant_when": "Setting up project structure",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "Use multichain ordering by default, omnichain for cross-chain consistency, experimental_isolated for max performance",
+      "original_snippets": "`multichain` (default) | Per-chain ordering, low latency. Most projects. ... `omnichain` | Cross-chain consistency needed ... `experimental_isolated` | Max performance. Requires `chainId` in ALL table primary keys.",
+      "relevant_when": "Choosing ordering mode in config",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "experimental_isolated ordering requires chainId in ALL table primary keys",
+      "original_snippets": "`experimental_isolated` ordering requires `chainId` in ALL table primary keys.",
+      "relevant_when": "Using experimental_isolated ordering mode",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "Health check endpoints: /health (always 200), /ready (503 during backfill, 200 when caught up)",
+      "original_snippets": "Health checks: `/health` (always 200), `/ready` (503 during backfill, 200 when caught up)",
+      "relevant_when": "Deploying and monitoring Ponder in production",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "onConflictDoUpdate callback receives the EXISTING row, not the values passed to .values()",
+      "original_snippets": "`onConflictDoUpdate` callback receives the EXISTING row, not the values you passed to `.values()`.",
+      "relevant_when": "Using upsert operations in indexing functions",
+      "why_given": "new knowledge"
+    }
+  ]
+}

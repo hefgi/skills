@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly uses upsert patterns with onConflictDoUpdate, understands the existing-row callback semantics, uses proper column types, applies indexes for query patterns, and follows schema naming conventions.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Upsert for accounts",
+      "description": "Uses context.db.insert().values().onConflictDoUpdate() for creating or updating account records, not separate find-then-insert logic",
+      "max_score": 10
+    },
+    {
+      "name": "Existing row in callback",
+      "description": "The onConflictDoUpdate callback references the existing/current row for computing updated values (e.g. incrementing counts from current values), not the values passed to .values()",
+      "max_score": 12
+    },
+    {
+      "name": "Hex for addresses",
+      "description": "Schema uses t.hex() for all address columns (from, to, owner), not t.text()",
+      "max_score": 8
+    },
+    {
+      "name": "Bigint for token ID",
+      "description": "Schema uses t.bigint() for the tokenId column",
+      "max_score": 8
+    },
+    {
+      "name": "Snake case tables",
+      "description": "All onchainTable name strings are in snake_case (e.g. 'account_stats', 'token_ownerships'), not camelCase",
+      "max_score": 8
+    },
+    {
+      "name": "Owner index",
+      "description": "Schema includes an index on the owner column of the token ownership table for filtering by owner",
+      "max_score": 10
+    },
+    {
+      "name": "Held count index",
+      "description": "Schema includes an index on the tokens-held count column of the accounts table for sorting/filtering",
+      "max_score": 8
+    },
+    {
+      "name": "Store API not SQL",
+      "description": "All database writes in indexing handler use context.db (Store API), not raw SQL queries",
+      "max_score": 8
+    },
+    {
+      "name": "Virtual imports",
+      "description": "Indexing file imports from 'ponder:registry' and 'ponder:schema', not relative file paths",
+      "max_score": 8
+    },
+    {
+      "name": "ABI as const",
+      "description": "ERC721 ABI file exports with `as const` assertion",
+      "max_score": 8
+    },
+    {
+      "name": "Correct startBlock",
+      "description": "Contract startBlock is set to 12287507, not 0 or omitted",
+      "max_score": 6
+    },
+    {
+      "name": "Lowercase address",
+      "description": "Contract address in config is fully lowercase, not checksummed",
+      "max_score": 6
+    }
+  ]
+}

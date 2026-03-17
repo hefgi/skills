@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly sets up a basic Ponder ERC-20 indexer following the skill's project structure, configuration patterns, schema conventions, and import patterns.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "ABI as const",
+      "description": "The ABI file exports the ABI with an `as const` assertion",
+      "max_score": 10
+    },
+    {
+      "name": "Correct startBlock",
+      "description": "The contract config sets startBlock to the deployment block (6082465), not 0 or omitted",
+      "max_score": 10
+    },
+    {
+      "name": "RPC env var pattern",
+      "description": "Uses PONDER_RPC_URL_1 (matching the PONDER_RPC_URL_<CHAIN_ID> convention) for the mainnet RPC",
+      "max_score": 10
+    },
+    {
+      "name": "Hex type for addresses",
+      "description": "Schema uses t.hex() (or equivalent hex column type) for address columns (from, to), not t.text()",
+      "max_score": 10
+    },
+    {
+      "name": "Bigint for amounts",
+      "description": "Schema uses t.bigint() for the transfer amount/value column, not t.integer() or t.text()",
+      "max_score": 10
+    },
+    {
+      "name": "Snake case table name",
+      "description": "The onchainTable name string is in snake_case (e.g. 'transfers' or 'transfer_events'), not camelCase",
+      "max_score": 8
+    },
+    {
+      "name": "Virtual module imports",
+      "description": "Indexing file imports from 'ponder:registry' and 'ponder:schema', not from relative file paths",
+      "max_score": 10
+    },
+    {
+      "name": "Store API usage",
+      "description": "Indexing function uses context.db for database writes (insert/upsert), not raw SQL",
+      "max_score": 8
+    },
+    {
+      "name": "Exact tsconfig",
+      "description": "tsconfig.json includes strict: true and target: 'ES2022' and module: 'ES2022'",
+      "max_score": 8
+    },
+    {
+      "name": "GraphQL middleware",
+      "description": "API route file uses the graphql() middleware from ponder for the query endpoint",
+      "max_score": 8
+    },
+    {
+      "name": "Lowercase address",
+      "description": "The USDC contract address in config is fully lowercase, not checksummed",
+      "max_score": 8
+    }
+  ]
+}

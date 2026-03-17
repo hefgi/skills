@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly configures factory contract indexing, uses composite primary keys instead of string concatenation, identifies child contracts via event.log.address, and follows address/type conventions.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Factory config",
+      "description": "Uses factory() helper in ponder.config.ts to configure the pair contract with the factory address and PairCreated event",
+      "max_score": 12
+    },
+    {
+      "name": "Composite primary key",
+      "description": "Schema uses primaryKey({ columns: [...] }) for tables needing multi-field identifiers, NOT string concatenation like `${a}-${b}`",
+      "max_score": 12
+    },
+    {
+      "name": "Child contract address",
+      "description": "Swap handler uses event.log.address to identify which pair contract emitted the event",
+      "max_score": 10
+    },
+    {
+      "name": "ABIs as const",
+      "description": "Both ABI files export with `as const` assertion",
+      "max_score": 8
+    },
+    {
+      "name": "Hex for addresses",
+      "description": "Schema uses t.hex() for pool/pair address columns, not t.text()",
+      "max_score": 8
+    },
+    {
+      "name": "Bigint for amounts",
+      "description": "Schema uses t.bigint() for swap amount columns (amount0In, amount1In, etc.)",
+      "max_score": 8
+    },
+    {
+      "name": "Pool address index",
+      "description": "Schema includes an index on the pool/pair address column for query filtering",
+      "max_score": 10
+    },
+    {
+      "name": "Virtual imports",
+      "description": "Indexing file uses 'ponder:registry' and 'ponder:schema' imports, not relative paths",
+      "max_score": 8
+    },
+    {
+      "name": "Lowercase addresses",
+      "description": "Contract addresses in config are fully lowercase, not checksummed",
+      "max_score": 8
+    },
+    {
+      "name": "Correct startBlock",
+      "description": "Factory contract startBlock is set to the deployment block (10000835), not 0",
+      "max_score": 8
+    },
+    {
+      "name": "Store API usage",
+      "description": "Handler uses context.db for writes, not raw SQL",
+      "max_score": 8
+    }
+  ]
+}

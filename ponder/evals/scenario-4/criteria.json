@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly configures production deployment with schema flags, separate serve process for scaling, health check knowledge, proper environment variables, and allowance composite key patterns.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Schema flag in start",
+      "description": "Deploy script uses `ponder start --schema <name>` with a --schema flag (or documents DATABASE_SCHEMA env var), not bare `ponder start`",
+      "max_score": 10
+    },
+    {
+      "name": "Serve command",
+      "description": "Deploy script includes `ponder serve --schema <name>` as the separate API-only process for horizontal scaling",
+      "max_score": 10
+    },
+    {
+      "name": "Health endpoint",
+      "description": "Health check doc describes /health endpoint as always returning 200",
+      "max_score": 8
+    },
+    {
+      "name": "Ready endpoint",
+      "description": "Health check doc describes /ready endpoint as returning 503 during backfill and 200 when caught up",
+      "max_score": 10
+    },
+    {
+      "name": "DATABASE_URL env var",
+      "description": ".env.local includes DATABASE_URL for Postgres connection string",
+      "max_score": 8
+    },
+    {
+      "name": "DATABASE_SCHEMA env var",
+      "description": ".env.local includes DATABASE_SCHEMA or the deploy script specifies the schema name",
+      "max_score": 8
+    },
+    {
+      "name": "Allowance composite key",
+      "description": "Allowances table uses composite primaryKey({ columns: [...] }) with owner and spender, not string concatenation",
+      "max_score": 10
+    },
+    {
+      "name": "Hex for addresses",
+      "description": "Schema uses t.hex() for address columns (owner, spender, from, to)",
+      "max_score": 8
+    },
+    {
+      "name": "Bigint for values",
+      "description": "Schema uses t.bigint() for balance and allowance value columns",
+      "max_score": 8
+    },
+    {
+      "name": "ABI as const",
+      "description": "ERC20 ABI file exports with `as const` assertion",
+      "max_score": 6
+    },
+    {
+      "name": "Correct startBlock",
+      "description": "Contract startBlock is set to 4719568, not 0",
+      "max_score": 6
+    },
+    {
+      "name": "Lowercase address",
+      "description": "WETH contract address in config is fully lowercase",
+      "max_score": 8
+    }
+  ]
+}
