@@ -3,9 +3,10 @@ name: review-workflow
 description: >
   Run an iterative code-review loop: a review workflow scores the diff by severity,
   Claude fixes every critical/major/minor issue (nits opportunistically), commits, then
-  re-reviews — looping until the review comes back clean. Project-agnostic; any git repo.
-  Use when the user asks to review-and-fix in a loop, do a feedback pass, or "keep
-  reviewing until clean".
+  re-reviews — looping until the review comes back clean. Runs a configurable model
+  ladder (default Sonnet → Opus; also sonnet, opus, or a custom models= list).
+  Project-agnostic; any git repo. Use when the user asks to review-and-fix in a loop,
+  do a feedback pass, or "keep reviewing until clean".
 invocations:
   - /review-workflow
 tags:
@@ -31,7 +32,7 @@ subagents run in isolated contexts. So the loop is split:
 | Apply the fixes | **you (the main agent)** |
 | Commit round N | **you (the main agent)** |
 | Re-review (round N+1) | **the bundled workflow** |
-| Escalate models cheap → smart | **you (the main agent)** — Sonnet loop, then Opus loop |
+| Escalate models cheap → smart | **you (the main agent)** — run each tier of the chosen ladder to clean |
 
 You drive the outer loop; the workflow is the per-round review engine you call. The workflow is invoked
 directly from this skill's bundled path — **nothing is written into the user's repo.**
@@ -60,14 +61,31 @@ Use **one** `AskUserQuestion` to pick what to review, then run the rest autonomo
 
 If the user already stated the scope in `$ARGUMENTS`, skip the question and use it.
 
-### 3. The escalation ladder (cheap → smart)
+### 3. Choose the model suite (the escalation ladder)
 
-Run the review loop on progressively smarter models: converge on **Sonnet**, then re-converge on **Opus**.
-The cheap mechanical work (scope, file-listing) always runs on **Haiku** inside the workflow. The idea:
-Sonnet clears the obvious issues cheaply; Opus does the final, smartest sign-off. Opus clean = done.
+The review runs on a **ladder** of models, cheap → smart: it converges on the first tier, then re-converges
+on the next, and so on. Mechanical work (scope, file-listing) always runs on **Haiku** inside the workflow
+regardless of the ladder.
 
+Resolve `tiers` (an ordered list of review models) from `$ARGUMENTS`:
+
+| In `$ARGUMENTS` | Resolved `tiers` |
+|-----------------|------------------|
+| `sonnet-opus` *(preset)* | `["sonnet", "opus"]` |
+| `sonnet` *(preset)* | `["sonnet"]` |
+| `opus` *(preset)* | `["opus"]` |
+| `models=<a,b,c>` (explicit list) | that list, e.g. `models=haiku,sonnet,opus` → `["haiku","sonnet","opus"]` |
+
+If no model suite is present in `$ARGUMENTS`, ask with **one** `AskUserQuestion` offering exactly these
+options (recommended one first):
+
+- **Sonnet → Opus** *(Recommended)* — Sonnet clears the obvious issues cheaply, then Opus does the final,
+  smartest sign-off. → `["sonnet", "opus"]`
+- **Sonnet only** — single cheaper/faster pass. → `["sonnet"]`
+- **Opus only** — max quality from round one, higher cost. → `["opus"]`
+
+Then run the ladder:
 ```
-tiers = ["sonnet", "opus"]
 globalRound = 0
 for tier in tiers:
     run the per-tier loop below with reviewModel = tier   # reset the no-progress guard at each tier
@@ -117,7 +135,8 @@ For each round in the current `tier`:
 ### 5. Completion report
 
 When the loop ends, summarize:
-- Tiers run (sonnet → opus), total rounds, and why it stopped (**Opus clean** / no-progress / hit 8 rounds).
+- The ladder run (e.g. sonnet → opus), total rounds, and why it stopped (**final tier clean** / no-progress
+  / hit 8 rounds).
 - Issues fixed per severity across all rounds; commits made (one per round).
 - If stopped by a guard: list the remaining findings (file, severity, title) so the user can decide.
 
@@ -128,10 +147,11 @@ When the loop ends, summarize:
 - **Reviewer agent** — the workflow prefers the `code-reviewer` agent (shipped by Claude Code's official
   review plugins) and **falls back** to the default workflow subagent when it isn't available, so the loop
   runs anywhere.
-- **Model tiering (cost-efficient)** — mechanical work (scope, file-listing) runs on **Haiku**; the review
-  ladder converges on **Sonnet** first, then **Opus** for the final sign-off. Each review round's verify
-  phase runs on the same tier as its review. Pass `reviewModel`/`mechanicsModel` in `args` to override.
-  Note: passing `reviewModel` overrides the `code-reviewer` agent's own model for that call, so the tier is
-  applied uniformly.
+- **Model tiering (cost-efficient, configurable)** — mechanical work (scope, file-listing) runs on
+  **Haiku**; the review ladder is chosen at invocation (default **Sonnet → Opus**; also `sonnet`, `opus`,
+  or an explicit `models=…` list — see step 3). Each review round's verify phase runs on the same tier as
+  its review. The skill passes `reviewModel`/`mechanicsModel` into the workflow `args`. Note: passing
+  `reviewModel` overrides the `code-reviewer` agent's own model for that call, so the tier is applied
+  uniformly.
 - **No attribution** — never add `Co-Authored-By: Claude` or "Generated with Claude Code" to commits.
 - **Nothing is copied into the repo** — the workflow runs from this skill's bundled `references/` path.
