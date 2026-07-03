@@ -31,6 +31,7 @@ subagents run in isolated contexts. So the loop is split:
 | Apply the fixes | **you (the main agent)** |
 | Commit round N | **you (the main agent)** |
 | Re-review (round N+1) | **the bundled workflow** |
+| Escalate models cheap → smart | **you (the main agent)** — Sonnet loop, then Opus loop |
 
 You drive the outer loop; the workflow is the per-round review engine you call. The workflow is invoked
 directly from this skill's bundled path — **nothing is written into the user's repo.**
@@ -59,30 +60,46 @@ Use **one** `AskUserQuestion` to pick what to review, then run the rest autonomo
 
 If the user already stated the scope in `$ARGUMENTS`, skip the question and use it.
 
-### 3. The loop (round N = 1, 2, …, up to 8)
+### 3. The escalation ladder (cheap → smart)
 
-For each round N:
+Run the review loop on progressively smarter models: converge on **Sonnet**, then re-converge on **Opus**.
+The cheap mechanical work (scope, file-listing) always runs on **Haiku** inside the workflow. The idea:
+Sonnet clears the obvious issues cheaply; Opus does the final, smartest sign-off. Opus clean = done.
+
+```
+tiers = ["sonnet", "opus"]
+globalRound = 0
+for tier in tiers:
+    run the per-tier loop below with reviewModel = tier   # reset the no-progress guard at each tier
+```
+
+### 4. The per-tier loop (round-by-round, shared cap of 8 rounds across all tiers)
+
+For each round in the current `tier`:
 
 1. **Review** — call the bundled workflow:
    ```
    Workflow({
      scriptPath: "<this-skill-dir>/references/review-loop.mjs",
-     args: { scopeMode, round: N, paths, focus }   // include base only if the user pinned one
+     args: { scopeMode, round: ++globalRound, paths, focus, reviewModel: tier }
+     // include base only if the user pinned one; mechanicsModel defaults to haiku
    })
    ```
    It returns `{ round, base, scopeMode, files, confirmed, counts }` where `confirmed` is the
    adversarially-verified findings (each `{ severity, file, location, title, detail, suggestedFix }`)
-   and `counts` is `{ critical, major, minor, nit }`.
+   and `counts` is `{ critical, major, minor, nit }`. The review **and** its per-finding verify both run on
+   `tier`.
 
-2. **Stop check** — if `counts.critical + counts.major + counts.minor === 0`, the review is clean → exit
-   the loop (still fix any nits opportunistically if trivial, then finish).
+2. **Tier-clean check** — if `counts.critical + counts.major + counts.minor === 0`, this tier is clean →
+   **break** to the next tier (or, if this was the last tier, finish). Fix trivial nits opportunistically
+   before moving on.
 
-3. **No-progress guard** — build the identity set of the current unresolved (critical/major/minor)
-   findings as `` `${file}::${title.trim().toLowerCase()}` ``. If it **equals** the previous round's set
-   (the same issues keep coming back), stop and report — you're not making progress. Healthy churn (a fix
-   surfacing *new* issues) changes the set and does not trip this.
+3. **No-progress guard** — build the identity set of the current unresolved (critical/major/minor) findings
+   as `` `${file}::${title.trim().toLowerCase()}` ``. If it **equals the previous round's set within this
+   tier**, stop the whole loop and report — the same issues keep coming back. **Reset this set when a new
+   tier starts** (a smarter model is expected to surface different findings; that is progress, not a stall).
 
-4. **Iteration guard** — if N === 8, stop and report the remaining findings.
+4. **Iteration guard** — if `globalRound === 8`, stop and report the remaining findings.
 
 5. **Fix** — apply fixes for every `confirmed` critical/major/minor finding, using its `suggestedFix` as a
    starting point (verify it's correct against the actual code — don't apply blindly). Also fix `nit`
@@ -90,17 +107,17 @@ For each round N:
 
 6. **Commit** — stage and commit the round's fixes:
    ```bash
-   git add -A && git commit -m "Address code review feedback (round N)"
+   git add -A && git commit -m "Address code review feedback (round <globalRound>, <tier>)"
    ```
    **No Claude attribution** in the message or trailers. If the round produced no file changes, skip the
    commit (and treat as no progress for the guard).
 
-7. Increment N and repeat from step 1.
+7. Repeat from step 1.
 
-### 4. Completion report
+### 5. Completion report
 
 When the loop ends, summarize:
-- Rounds run and why it stopped (**clean** / no-progress / hit 8 rounds).
+- Tiers run (sonnet → opus), total rounds, and why it stopped (**Opus clean** / no-progress / hit 8 rounds).
 - Issues fixed per severity across all rounds; commits made (one per round).
 - If stopped by a guard: list the remaining findings (file, severity, title) so the user can decide.
 
@@ -111,5 +128,10 @@ When the loop ends, summarize:
 - **Reviewer agent** — the workflow prefers the `code-reviewer` agent (shipped by Claude Code's official
   review plugins) and **falls back** to the default workflow subagent when it isn't available, so the loop
   runs anywhere.
+- **Model tiering (cost-efficient)** — mechanical work (scope, file-listing) runs on **Haiku**; the review
+  ladder converges on **Sonnet** first, then **Opus** for the final sign-off. Each review round's verify
+  phase runs on the same tier as its review. Pass `reviewModel`/`mechanicsModel` in `args` to override.
+  Note: passing `reviewModel` overrides the `code-reviewer` agent's own model for that call, so the tier is
+  applied uniformly.
 - **No attribution** — never add `Co-Authored-By: Claude` or "Generated with Claude Code" to commits.
 - **Nothing is copied into the repo** — the workflow runs from this skill's bundled `references/` path.

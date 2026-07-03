@@ -22,10 +22,25 @@ export const meta = {
 //     excludeGlobs,   // substring excludes overriding DEFAULT_EXCLUDES
 //     dimensions,     // [{ key, prompt }] overriding DEFAULT_DIMENSIONS
 //     reviewerAgentType, // override the review-phase agent type
+//     mechanicsModel, // model for scope/file-listing/probe (default 'haiku')
+//     reviewModel,    // model for the review + verify phases (this tier); e.g.
+//                     // 'sonnet' then 'opus' across the skill's escalation ladder
 //   }
 // ---------------------------------------------------------------------------
 const round = typeof args?.round === 'number' ? args.round : 1
 const scopeMode = args?.scopeMode ?? 'branch'
+
+// Model tiering (set by the driving skill's escalation ladder):
+//   mechanicsModel — scope resolution, file listing, reviewer-agent probe. Cheap
+//     mechanical work; defaults to haiku.
+//   reviewModel    — the review AND verify phases for this tier. The skill runs
+//     the loop on sonnet until clean, then re-runs on opus. Defaults to the
+//     inherited session model when unset (omit the field so agents inherit).
+const mechanicsModel = args?.mechanicsModel ?? 'haiku'
+const reviewModel = args?.reviewModel ?? null
+// Only attach a `model` opt when we actually have one — otherwise the agent
+// inherits the session model (the Workflow contract's default).
+const withModel = (opts, model) => (model ? { ...opts, model } : opts)
 
 // Generated / vendored paths that shouldn't be hand-reviewed. Override via
 // args.excludeGlobs (substring match on the path).
@@ -55,7 +70,7 @@ const reviewerAgentType =
     `A workflow wants to spawn a subagent of type "code-reviewer". Is that agent type available in THIS environment?
 Check for an agent named "code-reviewer": look under ~/.claude/agents, ~/.claude/plugins (enabled plugins' agents/ dirs), and any project .claude/agents directory.
 Return "code-reviewer" if such an agent is available, otherwise return "default". Return ONLY that one word.`,
-    { label: 'scope:reviewer-agent', phase: 'Scope', agentType: 'Explore' },
+    withModel({ label: 'scope:reviewer-agent', phase: 'Scope', agentType: 'Explore' }, mechanicsModel),
   ).then((s) => {
     const v = (s ?? '').trim().toLowerCase()
     return v.includes('code-reviewer') ? 'code-reviewer' : 'default'
@@ -79,7 +94,7 @@ Run these and reason about the output:
   git log --oneline -1
 Prefer the merge-base of HEAD with the repo's default branch (main/master, remote or local). If none resolve, use HEAD~1.
 Return ONLY the resolved base commit SHA or ref — no prose.`,
-    { label: 'scope:base', phase: 'Scope', agentType: 'Explore' },
+    withModel({ label: 'scope:base', phase: 'Scope', agentType: 'Explore' }, mechanicsModel),
   ).then((s) => (s ?? '').trim().split(/\s+/).pop())
 }
 
@@ -110,6 +125,7 @@ Return the remaining repo-relative paths. If none remain, return an empty list.`
           label: 'scope:files',
           phase: 'Scope',
           agentType: 'Explore',
+          model: mechanicsModel,
           // StructuredOutput requires a top-level object schema, so wrap the list.
           schema: {
             type: 'object',
@@ -125,7 +141,9 @@ if (!files || files.length === 0) {
   return { round, base, scopeMode, files: [], confirmed: [], counts: { critical: 0, major: 0, minor: 0, nit: 0 } }
 }
 
-log(`Round ${round}: reviewing ${files.length} file(s) [${scopeMode}] with ${reviewerAgentType} agent`)
+log(
+  `Round ${round}: reviewing ${files.length} file(s) [${scopeMode}] with ${reviewerAgentType} agent on ${reviewModel ?? 'session'} model`,
+)
 
 const FINDING_SCHEMA = {
   type: 'object',
@@ -213,7 +231,10 @@ const dimensions = Array.isArray(args?.dimensions) && args.dimensions.length > 0
 const reviewerOpts = (key) => {
   const o = { label: `review:${key}`, phase: 'Review', schema: FINDING_SCHEMA }
   if (reviewerAgentType !== 'default') o.agentType = reviewerAgentType
-  return o
+  // The tier's review model. Note: a custom agent (code-reviewer) has its own
+  // model in its definition; passing model here overrides it for this call so
+  // the escalation ladder controls the tier uniformly.
+  return withModel(o, reviewModel)
 }
 
 phase('Review')
@@ -231,12 +252,15 @@ const verified = await parallel(
   allFindings.map((f) => () =>
     agent(
       `${CONTEXT}\n\nAdversarially VERIFY this single finding. Read the actual code and decide whether it is a REAL issue worth fixing. Default to isReal=false if it is speculative, already handled elsewhere, a false positive, an intentional/documented tradeoff, or contradicts the project conventions. Re-grade severity honestly (a "critical" that's really cosmetic should come back minor/nit).\n\nFINDING:\nseverity=${f.severity}\nfile=${f.file}\nlocation=${f.location ?? ''}\ntitle=${f.title}\ndetail=${f.detail}\nsuggestedFix=${f.suggestedFix}`,
-      {
-        label: `verify:${f.severity}:${String(f.file).split('/').pop()}`,
-        phase: 'Verify',
-        schema: VERDICT_SCHEMA,
-        agentType: 'Explore',
-      },
+      withModel(
+        {
+          label: `verify:${f.severity}:${String(f.file).split('/').pop()}`,
+          phase: 'Verify',
+          schema: VERDICT_SCHEMA,
+          agentType: 'Explore',
+        },
+        reviewModel,
+      ),
     ).then((v) => (v && v.isReal ? { ...f, severity: v.severity, verifyReason: v.reason } : null)),
   ),
 )
