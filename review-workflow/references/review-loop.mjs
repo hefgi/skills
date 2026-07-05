@@ -102,7 +102,7 @@ if (scopeMode === 'paths' && paths.length === 0) {
 // trailing dot and any '..' range expression, both of which corrupt `git diff`.
 // Must start alphanumeric so a stray "-p" can't be read by git as a flag
 // (git diff -p..HEAD), and reject trailing dots / '..' ranges that corrupt the spec.
-const isRefLike = (r) => /^[A-Za-z0-9][A-Za-z0-9_/~^.-]+$/.test(r) && !r.endsWith('.') && !r.includes('..')
+const isRefLike = (r) => /^[A-Za-z0-9][A-Za-z0-9_/~^.-]*$/.test(r) && !r.endsWith('.') && !r.includes('..')
 // An explicit args.base is validated too (it lands in the diff command verbatim);
 // reject a non-ref-shaped value rather than trusting the caller.
 let base = args?.base != null && isRefLike(String(args.base)) ? String(args.base) : null
@@ -114,15 +114,24 @@ Run these and reason about the output:
   git merge-base HEAD origin/main 2>/dev/null || git merge-base HEAD main 2>/dev/null || git merge-base HEAD origin/master 2>/dev/null || git merge-base HEAD master 2>/dev/null
   git log --oneline -1
 Prefer the merge-base of HEAD with the repo's default branch (main/master, remote or local). If none resolve, use HEAD~1.
-Return ONLY the resolved base commit SHA or ref — no prose.`,
-    withModel({ label: 'scope:base', phase: 'Scope', agentType: 'Explore' }, mechanicsModel),
-  ).then((s) => {
-    // Pick the first ref-shaped token, stripping trailing prose punctuation first
-    // ("…is abc123." → "abc123"). Prefer this over .pop(), which would grab a
-    // trailing English word ("use abc123 as base" → "base", itself ref-like).
-    const toks = (s ?? '').trim().split(/\s+/).map((t) => t.replace(/[^A-Za-z0-9_/~^.-]+$/, ''))
-    return toks.find(isRefLike) ?? ''
-  })
+Put ONLY the resolved base commit SHA or ref in the "base" field — a bare ref, no prose.`,
+    // Structured output so we get a clean ref back instead of parsing free text
+    // (a chatty reply would otherwise let an English word masquerade as the ref).
+    withModel(
+      {
+        label: 'scope:base',
+        phase: 'Scope',
+        agentType: 'Explore',
+        schema: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['base'],
+          properties: { base: { type: 'string', description: 'a single git ref/SHA, e.g. HEAD~1 or a 40-char SHA' } },
+        },
+      },
+      mechanicsModel,
+    ),
+  ).then((r) => (r?.base ?? '').trim())
   // A blank/garbage base would make `git diff ..HEAD` empty or error — i.e. a
   // silent false-clean. Fall back to HEAD~1 rather than reviewing nothing.
   if (!isRefLike(base)) {

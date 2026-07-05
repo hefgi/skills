@@ -128,15 +128,18 @@ For each round in the current `tier`:
 3. **No-progress guard** — build the identity set of the current unresolved (critical/major/minor) findings
    as `` `${file.trim().replace(/^\.\//, '')}::${title.trim().toLowerCase()}` `` (normalize both halves so
    `./x` and `x` don't read as different findings). If it **equals `prevSet`** (the same issues keep
-   coming back within this tier): **escalate, don't quit** — `break` to the **next tier**, whose smarter
+   coming back within this tier): **escalate, don't quit** — compare the sets by value (e.g. sort the keys
+   and join to a string), not by object identity — `break` to the **next tier**, whose smarter
    model may fix or dismiss them. Only if this is already the **last tier** do you stop the whole loop and
    report. Then set `prevSet` to the current set for the next round. `prevSet` starts `null` at each tier
    (set in the ladder above), so round 1 of a tier never falsely trips this.
 
 4. **Iteration guard** — if `globalRound >= 8`, stop and report the remaining findings. (`>=`, not `===`,
-   so a tier that escalated at round 8 can't push `globalRound` to 9 and slip past the cap.) This caps the
-   run at 8 *reviews*: the 8th review's findings are reported but not fixed/committed, so at most 7
-   fix-commit rounds occur. That's intentional — a hard backstop, not a target.
+   so the cap can't be skipped past if an escalation lands `globalRound` on 9.) This caps the run at ~8
+   *reviews* (at most one extra if a tier escalation happens to run a 9th review before the guard fires);
+   the final review's findings are reported but not fixed/committed. That's intentional — a hard backstop,
+   not a target. If the guard fires on the **first** round of an escalated tier (so that tier applied zero
+   fixes), say so in the report and suggest re-running `/review-workflow <that tier>` on a fresh branch.
 
 5. **Fix** — apply fixes for every `confirmed` critical/major/minor finding, using its `suggestedFix` as a
    starting point (verify it's correct against the actual code — don't apply blindly). Also fix `nit`
