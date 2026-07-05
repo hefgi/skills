@@ -85,8 +85,13 @@ const pathArgs = paths.length ? ' -- ' + paths.map(shq).join(' ') : ''
 // `working` needs no base (it diffs the working tree against HEAD).
 // A git ref is a bounded charset; reject anything else so a chatty agent reply
 // can't produce a garbage ref that silently yields an empty (false-clean) diff.
-const isRefLike = (r) => /^[A-Za-z0-9_/~^.-]{4,}$/.test(r)
-let base = args?.base ?? null
+// A git ref is a bounded charset AND cannot end in a dot; validate both so a
+// chatty "…is abc123." reply can't slip a bad ref (abc123. → `git diff abc123...HEAD`)
+// into the shell command shown to reviewer agents.
+const isRefLike = (r) => /^[A-Za-z0-9_/~^.-]{4,}$/.test(r) && !r.endsWith('.')
+// An explicit args.base is validated too (it lands in the diff command verbatim);
+// reject a non-ref-shaped value rather than trusting the caller.
+let base = args?.base != null && isRefLike(String(args.base)) ? String(args.base) : null
 if ((scopeMode === 'branch' || scopeMode === 'paths') && !base) {
   base = await agent(
     `Determine the git base ref to diff this branch against, for a code review of "the work on this branch".
@@ -280,14 +285,29 @@ const verified = await parallel(
         },
         reviewModel,
       ),
-    ).then((v) => (v && v.isReal ? { ...f, severity: v.severity, verifyReason: v.reason } : null)),
+    ).then((v) =>
+      // Distinguish three outcomes so a CRASH can't masquerade as a rejection:
+      //   v === null (agent died) → keep the finding conservatively (dropping a
+      //     real bug is worse than keeping a maybe); mark it unverified.
+      //   v.isReal === false      → genuine rejection, drop it.
+      //   v.isReal === true       → confirmed, apply the re-graded severity.
+      v == null
+        ? { ...f, verifyReason: 'verifier crashed — kept unverified', verifyFailed: true }
+        : v.isReal
+          ? { ...f, severity: v.severity, verifyReason: v.reason }
+          : null,
+    ),
   ),
 )
 
 const confirmed = verified.filter(Boolean)
+const verifyFailures = confirmed.filter((f) => f.verifyFailed).length
 const order = { critical: 0, major: 1, minor: 2, nit: 3 }
 confirmed.sort((a, b) => order[a.severity] - order[b.severity])
-log(`Round ${round}: ${confirmed.length} confirmed after adversarial verify`)
+log(
+  `Round ${round}: ${confirmed.length} confirmed after adversarial verify` +
+    (verifyFailures ? ` (${verifyFailures} kept unverified — verifier crashed)` : ''),
+)
 
 const counts = {
   critical: confirmed.filter((f) => f.severity === 'critical').length,

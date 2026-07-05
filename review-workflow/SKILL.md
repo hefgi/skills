@@ -66,7 +66,10 @@ Use **one** `AskUserQuestion` to pick what to review, then run the rest autonomo
 | Working-tree changes only | `working` | Staged + unstaged changes vs `HEAD`. |
 | Specific paths | `paths` | The branch diff (`merge-base..HEAD`) restricted to the paths the user names (ask for them). |
 
-If the user already stated the scope in `$ARGUMENTS`, skip the question and use it.
+If the user already stated the scope in `$ARGUMENTS`, skip the question and use it. If they pick **Specific
+paths** and haven't listed the paths, a follow-up question to collect the path list is allowed (this is the
+one exception to "one question") — never pass `scopeMode: "paths"` with an empty `paths`, or it silently
+reviews the whole branch.
 
 ### 3. Choose the model suite (the escalation ladder)
 
@@ -107,8 +110,10 @@ For each round in the current `tier`:
    ```
    Workflow({
      scriptPath: "<this-skill-dir>/references/review-loop.mjs",
-     args: { scopeMode, round: ++globalRound, paths, focus, reviewModel: tier }
-     // include base only if the user pinned one; mechanicsModel defaults to haiku
+     args: { scopeMode, round: ++globalRound, paths, reviewModel: tier }
+     // include base only if the user pinned one; mechanicsModel defaults to haiku.
+     // Optional: pass focus:"<text>" to weight the reviewers toward a concern the
+     // user called out in $ARGUMENTS.
    })
    ```
    It returns `{ round, base, scopeMode, files, confirmed, counts }` where `confirmed` is the
