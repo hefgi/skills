@@ -51,7 +51,7 @@ When invoked with `/review-workflow $ARGUMENTS`:
   `SKILL.md`) — you need it for the `Workflow` call below. The install location varies (project
   `.claude/skills/`, global `~/.claude/`, or a tessl cache path), so locate it rather than assuming:
   ```bash
-  find . ~/.claude -type f -path '*review-workflow/references/review-loop.mjs' 2>/dev/null | head -1
+  find . ~/.claude ~/.tessl -type f -path '*review-workflow/references/review-loop.mjs' 2>/dev/null | head -1
   ```
   Use the returned absolute path as `scriptPath`. If nothing is found, tell the user the skill's workflow
   file is missing and STOP.
@@ -126,7 +126,8 @@ For each round in the current `tier`:
    before moving on.
 
 3. **No-progress guard** — build the identity set of the current unresolved (critical/major/minor) findings
-   as `` `${file}::${title.trim().toLowerCase()}` ``. If it **equals `prevSet`** (the same issues keep
+   as `` `${file.trim().replace(/^\.\//, '')}::${title.trim().toLowerCase()}` `` (normalize both halves so
+   `./x` and `x` don't read as different findings). If it **equals `prevSet`** (the same issues keep
    coming back within this tier): **escalate, don't quit** — `break` to the **next tier**, whose smarter
    model may fix or dismiss them. Only if this is already the **last tier** do you stop the whole loop and
    report. Then set `prevSet` to the current set for the next round. `prevSet` starts `null` at each tier

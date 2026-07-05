@@ -93,9 +93,11 @@ if (scopeMode === 'paths' && paths.length === 0) {
 // `working` needs no base (it diffs the working tree against HEAD).
 // A git ref is a bounded charset; reject anything else so a chatty agent reply
 // can't produce a garbage ref that silently yields an empty (false-clean) diff.
-// A git ref is a bounded charset AND cannot end in a dot; validate both so a
-// chatty "…is abc123." reply can't slip a bad ref (abc123. → `git diff abc123...HEAD`)
-// into the shell command shown to reviewer agents.
+// Best-effort ref sanity check on a chatty agent reply: the charset excludes all
+// shell metacharacters (so it's injection-safe), and we reject a trailing dot and
+// '..' ranges that would corrupt `git diff`. It's not a full git-ref validator —
+// git rejecting a bad ref, plus the empty-files early-return below, are the real
+// backstops against a garbage base slipping through.
 // {2,} not {4,}: short branch names (dev, uat, qa) are valid refs. Reject a
 // trailing dot and any '..' range expression, both of which corrupt `git diff`.
 const isRefLike = (r) => /^[A-Za-z0-9_/~^.-]{2,}$/.test(r) && !r.endsWith('.') && !r.includes('..')
