@@ -100,7 +100,9 @@ if (scopeMode === 'paths' && paths.length === 0) {
 // backstops against a garbage base slipping through.
 // {2,} not {4,}: short branch names (dev, uat, qa) are valid refs. Reject a
 // trailing dot and any '..' range expression, both of which corrupt `git diff`.
-const isRefLike = (r) => /^[A-Za-z0-9_/~^.-]{2,}$/.test(r) && !r.endsWith('.') && !r.includes('..')
+// Must start alphanumeric so a stray "-p" can't be read by git as a flag
+// (git diff -p..HEAD), and reject trailing dots / '..' ranges that corrupt the spec.
+const isRefLike = (r) => /^[A-Za-z0-9][A-Za-z0-9_/~^.-]+$/.test(r) && !r.endsWith('.') && !r.includes('..')
 // An explicit args.base is validated too (it lands in the diff command verbatim);
 // reject a non-ref-shaped value rather than trusting the caller.
 let base = args?.base != null && isRefLike(String(args.base)) ? String(args.base) : null
@@ -115,10 +117,11 @@ Prefer the merge-base of HEAD with the repo's default branch (main/master, remot
 Return ONLY the resolved base commit SHA or ref — no prose.`,
     withModel({ label: 'scope:base', phase: 'Scope', agentType: 'Explore' }, mechanicsModel),
   ).then((s) => {
-    // Take the last whitespace-token and strip any trailing prose punctuation
-    // (a model that ignores "no prose" might return "…base is abc123.").
-    const tok = (s ?? '').trim().split(/\s+/).pop() ?? ''
-    return tok.replace(/[^A-Za-z0-9_/~^.-]+$/, '')
+    // Pick the first ref-shaped token, stripping trailing prose punctuation first
+    // ("…is abc123." → "abc123"). Prefer this over .pop(), which would grab a
+    // trailing English word ("use abc123 as base" → "base", itself ref-like).
+    const toks = (s ?? '').trim().split(/\s+/).map((t) => t.replace(/[^A-Za-z0-9_/~^.-]+$/, ''))
+    return toks.find(isRefLike) ?? ''
   })
   // A blank/garbage base would make `git diff ..HEAD` empty or error — i.e. a
   // silent false-clean. Fall back to HEAD~1 rather than reviewing nothing.

@@ -133,9 +133,10 @@ For each round in the current `tier`:
    report. Then set `prevSet` to the current set for the next round. `prevSet` starts `null` at each tier
    (set in the ladder above), so round 1 of a tier never falsely trips this.
 
-4. **Iteration guard** — if `globalRound === 8`, stop and report the remaining findings. (This caps the run
-   at 8 *reviews*: the 8th review's findings are reported but not fixed/committed, so at most 7 fix-commit
-   rounds occur. That's intentional — a hard backstop, not a target.)
+4. **Iteration guard** — if `globalRound >= 8`, stop and report the remaining findings. (`>=`, not `===`,
+   so a tier that escalated at round 8 can't push `globalRound` to 9 and slip past the cap.) This caps the
+   run at 8 *reviews*: the 8th review's findings are reported but not fixed/committed, so at most 7
+   fix-commit rounds occur. That's intentional — a hard backstop, not a target.
 
 5. **Fix** — apply fixes for every `confirmed` critical/major/minor finding, using its `suggestedFix` as a
    starting point (verify it's correct against the actual code — don't apply blindly). Also fix `nit`
