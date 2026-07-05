@@ -12,13 +12,11 @@ on:
   push:
     branches:
       - main
-    # Only run the jobs whose tile actually changed (see per-job paths filters).
-    paths:
-      - 'shortcut/**'
-      - 'ponder/**'
-      - 'review-workflow/**'
 
 jobs:
+  # Detect which tile(s) changed; each publish job gates on its own filter. The
+  # workflow always starts on a push to main and the per-job `if:` conditions
+  # decide what actually publishes — one place to update when adding a tile.
   changes:
     runs-on: ubuntu-latest
     outputs:
@@ -26,7 +24,7 @@ jobs:
       ponder: ${{ steps.filter.outputs.ponder }}
       review-workflow: ${{ steps.filter.outputs.review-workflow }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
         id: filter
         with:
@@ -43,7 +41,7 @@ jobs:
     if: needs.changes.outputs.shortcut == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
       - uses: tesslio/publish@main
         with:
           token: ${{ secrets.TESSL_API_TOKEN }}
@@ -54,7 +52,7 @@ jobs:
     if: needs.changes.outputs.ponder == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
       - uses: tesslio/publish@main
         with:
           token: ${{ secrets.TESSL_API_TOKEN }}
@@ -65,7 +63,7 @@ jobs:
     if: needs.changes.outputs.review-workflow == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
       - uses: tesslio/publish@main
         with:
           token: ${{ secrets.TESSL_API_TOKEN }}

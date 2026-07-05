@@ -24,6 +24,7 @@ claude plugin install <skill-name>
 ```bash
 npx tessl i hefgi/shortcut
 npx tessl i hefgi/ponder
+npx tessl i hefgi/review-workflow
 ```
 
 ### Using Skills.sh
@@ -31,6 +32,7 @@ npx tessl i hefgi/ponder
 ```bash
 npx skills add https://github.com/hefgi/skills --skill shortcut
 npx skills add https://github.com/hefgi/skills --skill ponder
+npx skills add https://github.com/hefgi/skills --skill review-workflow
 ```
 
 ## Adding a New Skill
