@@ -88,7 +88,8 @@ Then run the ladder:
 ```
 globalRound = 0
 for tier in tiers:
-    run the per-tier loop below with reviewModel = tier   # reset the no-progress guard at each tier
+    prevSet = null                # reset the no-progress guard at the start of EACH tier
+    run the per-tier loop below with reviewModel = tier
 ```
 
 ### 4. The per-tier loop (round-by-round, shared cap of 8 rounds across all tiers)
@@ -113,9 +114,11 @@ For each round in the current `tier`:
    before moving on.
 
 3. **No-progress guard** — build the identity set of the current unresolved (critical/major/minor) findings
-   as `` `${file}::${title.trim().toLowerCase()}` ``. If it **equals the previous round's set within this
-   tier**, stop the whole loop and report — the same issues keep coming back. **Reset this set when a new
-   tier starts** (a smarter model is expected to surface different findings; that is progress, not a stall).
+   as `` `${file}::${title.trim().toLowerCase()}` ``. If it **equals `prevSet`** (the same issues keep
+   coming back within this tier): **escalate, don't quit** — `break` to the **next tier**, whose smarter
+   model may fix or dismiss them. Only if this is already the **last tier** do you stop the whole loop and
+   report. Then set `prevSet` to the current set for the next round. `prevSet` starts `null` at each tier
+   (set in the ladder above), so round 1 of a tier never falsely trips this.
 
 4. **Iteration guard** — if `globalRound === 8`, stop and report the remaining findings.
 
@@ -123,9 +126,12 @@ For each round in the current `tier`:
    starting point (verify it's correct against the actual code — don't apply blindly). Also fix `nit`
    findings when the change is low-risk and quick.
 
-6. **Commit** — stage and commit the round's fixes:
+6. **Commit** — stage only the files you actually edited (do **not** `git add -A`/`-A` — the working tree
+   may hold untracked secrets like `.env`; prefer explicit paths, or `git add -u` for tracked-only), then
+   commit:
    ```bash
-   git add -A && git commit -m "Address code review feedback (round <globalRound>, <tier>)"
+   git add <the files you fixed>   # or: git add -u
+   git commit -m "Address code review feedback (round <globalRound>, <tier>)"
    ```
    **No Claude attribution** in the message or trailers. If the round produced no file changes, skip the
    commit (and treat as no progress for the guard).
@@ -144,9 +150,11 @@ When the loop ends, summarize:
 
 - **Project-agnostic** — no repo-specific rules baked in; the workflow reads the nearest `CLAUDE.md` and
   treats its conventions as review criteria.
-- **Reviewer agent** — the workflow prefers the `code-reviewer` agent (shipped by Claude Code's official
-  review plugins) and **falls back** to the default workflow subagent when it isn't available, so the loop
-  runs anywhere.
+- **Reviewer agent** — the workflow reviews with the `general-purpose` workflow subagent by default, so it
+  runs anywhere. (Workflow subagents resolve agent types against the runtime registry, not agent files on
+  disk, so a repo/plugin `code-reviewer.md` is *not* usable here.) If a custom review agent is registered
+  at runtime, pass its name via `reviewerAgentType` in `args`. If every reviewer fails, the workflow throws
+  rather than reporting a false "clean" — so a broken review can never be mistaken for a passing one.
 - **Model tiering (cost-efficient, configurable)** — mechanical work (scope, file-listing) runs on
   **Haiku**; the review ladder is chosen at invocation (default **Sonnet → Opus**; also `sonnet`, `opus`,
   or an explicit `models=…` list — see step 3). Each review round's verify phase runs on the same tier as

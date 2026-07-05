@@ -21,8 +21,9 @@ export const meta = {
 //     focus,          // free-text focus to weight the review
 //     excludeGlobs,   // substring excludes overriding DEFAULT_EXCLUDES
 //     dimensions,     // [{ key, prompt }] overriding DEFAULT_DIMENSIONS
-//     reviewerAgentType, // override the review-phase agent type
-//     mechanicsModel, // model for scope/file-listing/probe (default 'haiku')
+//     reviewerAgentType, // review-phase agent type (default 'general-purpose');
+//                     // must be a RUNTIME-registered agent, not just a file on disk
+//     mechanicsModel, // model for scope/file-listing (default 'haiku')
 //     reviewModel,    // model for the review + verify phases (this tier); e.g.
 //                     // 'sonnet' then 'opus' across the skill's escalation ladder
 //   }
@@ -61,20 +62,13 @@ const excludes = Array.isArray(args?.excludeGlobs) ? args.excludeGlobs : DEFAULT
 
 phase('Scope')
 
-// The review phase prefers the `code-reviewer` agent (shipped by Claude Code's
-// official review plugins). It may be absent in some environments; probe once
-// and fall back to the default workflow subagent so the loop runs anywhere.
-const reviewerAgentType =
-  args?.reviewerAgentType ??
-  (await agent(
-    `A workflow wants to spawn a subagent of type "code-reviewer". Is that agent type available in THIS environment?
-Check for an agent named "code-reviewer": look under ~/.claude/agents, ~/.claude/plugins (enabled plugins' agents/ dirs), and any project .claude/agents directory.
-Return "code-reviewer" if such an agent is available, otherwise return "default". Return ONLY that one word.`,
-    withModel({ label: 'scope:reviewer-agent', phase: 'Scope', agentType: 'Explore' }, mechanicsModel),
-  ).then((s) => {
-    const v = (s ?? '').trim().toLowerCase()
-    return v.includes('code-reviewer') ? 'code-reviewer' : 'default'
-  }))
+// Reviewer agent type. Workflow subagents resolve agentType against the RUNTIME
+// registry (general-purpose, Explore, Plan, …), NOT against agent files on disk —
+// a repo/plugin `code-reviewer.md` is invisible here and passing it throws
+// "agent type not found", which would silently drop the reviewer to null. So the
+// safe default is `general-purpose`. Callers who KNOW a custom review agent is
+// registered at runtime can opt in via args.reviewerAgentType.
+const reviewerAgentType = args?.reviewerAgentType ?? 'general-purpose'
 
 // Build the review target as a shell diff spec + the file-discovery command,
 // depending on scope mode. `branch` diffs base..HEAD; `working` diffs the
@@ -95,7 +89,18 @@ Run these and reason about the output:
 Prefer the merge-base of HEAD with the repo's default branch (main/master, remote or local). If none resolve, use HEAD~1.
 Return ONLY the resolved base commit SHA or ref — no prose.`,
     withModel({ label: 'scope:base', phase: 'Scope', agentType: 'Explore' }, mechanicsModel),
-  ).then((s) => (s ?? '').trim().split(/\s+/).pop())
+  ).then((s) => {
+    // Take the last whitespace-token and strip any trailing prose punctuation
+    // (a model that ignores "no prose" might return "…base is abc123.").
+    const tok = (s ?? '').trim().split(/\s+/).pop() ?? ''
+    return tok.replace(/[^A-Za-z0-9_/~^.-]+$/, '')
+  })
+  // A blank/failed base would make `git diff ..HEAD` an empty diff — i.e. a
+  // silent false-clean. Fall back to HEAD~1 rather than reviewing nothing.
+  if (!base) {
+    log('scope:base returned empty — falling back to HEAD~1')
+    base = 'HEAD~1'
+  }
 }
 
 // The diff spec used in every reviewer/verifier prompt.
@@ -225,23 +230,29 @@ const DEFAULT_DIMENSIONS = [
 ]
 const dimensions = Array.isArray(args?.dimensions) && args.dimensions.length > 0 ? args.dimensions : DEFAULT_DIMENSIONS
 
-// The reviewer opts: use the resolved agent type, but only pass agentType when
-// it's a real custom agent — 'default' means "let the workflow pick the default
-// subagent" (omit the field entirely).
-const reviewerOpts = (key) => {
-  const o = { label: `review:${key}`, phase: 'Review', schema: FINDING_SCHEMA }
-  if (reviewerAgentType !== 'default') o.agentType = reviewerAgentType
-  // The tier's review model. Note: a custom agent (code-reviewer) has its own
-  // model in its definition; passing model here overrides it for this call so
-  // the escalation ladder controls the tier uniformly.
-  return withModel(o, reviewModel)
-}
+// Reviewer opts. reviewerAgentType is always a real runtime agent type
+// (general-purpose by default), so it's always passed. The tier's review model
+// overrides any agent-definition default so the escalation ladder controls the
+// tier uniformly.
+const reviewerOpts = (key) =>
+  withModel({ label: `review:${key}`, phase: 'Review', schema: FINDING_SCHEMA, agentType: reviewerAgentType }, reviewModel)
 
 phase('Review')
 const reviews = await parallel(dimensions.map((d) => () => agent(`${CONTEXT}\n\n${d.prompt}`, reviewerOpts(d.key))))
 
-const allFindings = reviews.filter(Boolean).flatMap((r) => r.findings ?? [])
-log(`Round ${round}: ${allFindings.length} raw findings from ${dimensions.length} reviewers`)
+// Fail loud, not silent: a reviewer that throws becomes null via parallel(). If
+// EVERY reviewer failed, "0 findings" is a broken review, not a clean one —
+// returning clean counts here would let the driving loop declare success on a
+// review that never actually ran. Surface it instead.
+const okReviews = reviews.filter(Boolean)
+if (okReviews.length === 0) {
+  throw new Error(
+    `Round ${round}: all ${dimensions.length} reviewers failed (agentType="${reviewerAgentType}", model="${reviewModel ?? 'session'}"). This is a review failure, not a clean result — check the agent type is valid.`,
+  )
+}
+
+const allFindings = okReviews.flatMap((r) => r.findings ?? [])
+log(`Round ${round}: ${allFindings.length} raw findings from ${okReviews.length}/${dimensions.length} reviewers`)
 
 if (allFindings.length === 0) {
   return { round, base, scopeMode, files, confirmed: [], counts: { critical: 0, major: 0, minor: 0, nit: 0 } }
