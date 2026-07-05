@@ -74,7 +74,11 @@ const reviewerAgentType = args?.reviewerAgentType ?? 'general-purpose'
 // depending on scope mode. `branch` diffs base..HEAD; `working` diffs the
 // working tree (staged + unstaged) against HEAD; `paths` restricts to args.paths.
 const paths = Array.isArray(args?.paths) ? args.paths : []
-const pathArgs = paths.length ? ' -- ' + paths.map((p) => `'${p}'`).join(' ') : ''
+// POSIX single-quote escaping: close the quote, emit an escaped ', reopen — so a
+// path with an apostrophe (e.g. user's-code/x.ts) doesn't break the shell command
+// embedded in the reviewer prompts.
+const shq = (p) => `'${String(p).replace(/'/g, `'\\''`)}'`
+const pathArgs = paths.length ? ' -- ' + paths.map(shq).join(' ') : ''
 
 // Resolve the base ref (branch mode only): explicit arg > merge-base with the
 // first existing default branch > HEAD~1 fallback.

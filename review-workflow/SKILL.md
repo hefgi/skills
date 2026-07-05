@@ -4,9 +4,10 @@ description: >
   Run an iterative code-review loop: a review workflow scores the diff by severity,
   Claude fixes every critical/major/minor issue (nits opportunistically), commits, then
   re-reviews — looping until the review comes back clean. Runs a configurable model
-  ladder (default Sonnet → Opus; also sonnet, opus, or a custom models= list).
-  Project-agnostic; any git repo. Use when the user asks to review-and-fix in a loop,
-  do a feedback pass, or "keep reviewing until clean".
+  ladder chosen at invocation (recommended Sonnet → Opus; also sonnet, opus, or a
+  custom models= list — asks if unspecified). Project-agnostic; any git repo. Use
+  when the user asks to review-and-fix in a loop, do a feedback pass, or "keep
+  reviewing until clean".
 invocations:
   - /review-workflow
 tags:
@@ -46,8 +47,14 @@ When invoked with `/review-workflow $ARGUMENTS`:
 - Confirm this is a git repo (`git rev-parse --git-dir`). If not, tell the user and STOP.
 - Determine the current branch. If on `main`/`master`, create a working branch first (do not commit review
   fixes onto the default branch).
-- Note this skill's directory — you need the absolute path to `references/review-loop.mjs` for the
-  `Workflow` call below. It sits next to this `SKILL.md`.
+- Resolve the absolute path to this skill's bundled workflow (`references/review-loop.mjs`, next to this
+  `SKILL.md`) — you need it for the `Workflow` call below. The install location varies (project
+  `.claude/skills/`, global `~/.claude/`, or a tessl cache path), so locate it rather than assuming:
+  ```bash
+  find . ~/.claude -type f -path '*review-workflow/references/review-loop.mjs' 2>/dev/null | head -1
+  ```
+  Use the returned absolute path as `scriptPath`. If nothing is found, tell the user the skill's workflow
+  file is missing and STOP.
 
 ### 2. Ask scope (once)
 

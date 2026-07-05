@@ -4,13 +4,43 @@ permissions:
   id-token: write
   contents: read
 
+# NOTE: tesslio/publish is pinned to @main below. For supply-chain safety
+# (TESSL_API_TOKEN is passed to it), consider pinning to a released tag or a
+# specific commit SHA once one is known, and bumping it deliberately.
+
 on:
   push:
     branches:
       - main
+    # Only run the jobs whose tile actually changed (see per-job paths filters).
+    paths:
+      - 'shortcut/**'
+      - 'ponder/**'
+      - 'review-workflow/**'
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      shortcut: ${{ steps.filter.outputs.shortcut }}
+      ponder: ${{ steps.filter.outputs.ponder }}
+      review-workflow: ${{ steps.filter.outputs.review-workflow }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            shortcut:
+              - 'shortcut/**'
+            ponder:
+              - 'ponder/**'
+            review-workflow:
+              - 'review-workflow/**'
+
   publish-shortcut:
+    needs: changes
+    if: needs.changes.outputs.shortcut == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -20,6 +50,8 @@ jobs:
           path: './shortcut'
 
   publish-ponder:
+    needs: changes
+    if: needs.changes.outputs.ponder == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -29,6 +61,8 @@ jobs:
           path: './ponder'
 
   publish-review-workflow:
+    needs: changes
+    if: needs.changes.outputs.review-workflow == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
