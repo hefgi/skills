@@ -2,10 +2,11 @@
 name: review-workflow
 description: >
   Run an iterative code-review loop: a review workflow scores the diff by severity,
-  Claude fixes every critical/major/minor issue (nits opportunistically), commits, then
-  re-reviews — looping until the review comes back clean. Runs a configurable model
-  ladder chosen at invocation (recommended Sonnet → Opus; also sonnet, opus, or a
-  custom models= list — asks if unspecified). Project-agnostic; any git repo. Use
+  Claude fixes the issues at the chosen strictness, commits, then re-reviews — looping
+  until the review comes back clean. Configurable at invocation: a model ladder
+  (recommended Sonnet → Opus; also sonnet, opus, or a custom models= list) and a
+  strictness set of severities to enforce (default critical+major+minor; e.g.
+  strictness=critical,major). Asks if unspecified. Project-agnostic; any git repo. Use
   when the user asks to review-and-fix in a loop, do a feedback pass, or "keep
   reviewing until clean".
 invocations:
@@ -15,7 +16,7 @@ tags:
   - workflow
   - git
   - quality
-version: 1.0.0
+version: 1.1.0
 ---
 
 # Review Workflow Skill
@@ -34,6 +35,7 @@ subagents run in isolated contexts. So the loop is split:
 | Commit round N | **you (the main agent)** |
 | Re-review (round N+1) | **the bundled workflow** |
 | Escalate models cheap → smart | **you (the main agent)** — run each tier of the chosen ladder to clean |
+| Decide which severities to fix/enforce | **you (the main agent)** — the chosen strictness set |
 
 You drive the outer loop; the workflow is the per-round review engine you call. The workflow is invoked
 directly from this skill's bundled path — **nothing is written into the user's repo.**
@@ -104,7 +106,28 @@ for tier in tiers:
     run the per-tier loop below with reviewModel = tier
 ```
 
-### 4. The per-tier loop (round-by-round, shared cap of 8 rounds across all tiers)
+You can ask the scope, model, and strictness questions together in a single `AskUserQuestion` call (it
+takes multiple questions) — that still counts as asking "once".
+
+### 4. Choose strictness (which severities to enforce)
+
+`enforce` is the **set of severities the loop both fixes and drives to zero** before a tier is clean.
+Severities *not* in the set are ignored for the stop condition; anything in the set is fixed every round.
+
+Resolve `enforce` from `$ARGUMENTS`:
+
+| In `$ARGUMENTS` | Resolved `enforce` |
+|-----------------|--------------------|
+| `strictness=<a,b,…>` (explicit list) | that set, e.g. `strictness=critical,major` → `{critical, major}` |
+| *(absent)* | ask, pre-checked to the default below |
+
+If no strictness is present in `$ARGUMENTS`, ask with **one** multi-select `AskUserQuestion` listing all four
+severities — `critical`, `major`, `minor`, `nit` — pre-checked to **`critical` + `major` + `minor`** (the
+default; unchanged from prior behavior). The user ticks exactly the severities to enforce (any combination,
+e.g. `critical` + `major` + `nit` to skip minor). At least `critical` should be selected; if the user picks
+nothing, fall back to the default.
+
+### 5. The per-tier loop (round-by-round, shared cap of 8 rounds across all tiers)
 
 For each round in the current `tier`:
 
@@ -123,11 +146,12 @@ For each round in the current `tier`:
    and `counts` is `{ critical, major, minor, nit }`. The review **and** its per-finding verify both run on
    `tier`.
 
-2. **Tier-clean check** — if `counts.critical + counts.major + counts.minor === 0`, this tier is clean →
-   **break** to the next tier (or, if this was the last tier, finish). Fix trivial nits opportunistically
+2. **Tier-clean check** — if the sum of `counts` over the **enforced** severities is `0` (e.g. for
+   `enforce = {critical, major}`, `counts.critical + counts.major === 0`), this tier is clean → **break** to
+   the next tier (or, if this was the last tier, finish). Fix trivial non-enforced findings opportunistically
    before moving on.
 
-3. **No-progress guard** — build the identity set of the current unresolved (critical/major/minor) findings
+3. **No-progress guard** — build the identity set of the current unresolved **enforced** findings
    as `` `${file.trim().replace(/^\.\//, '')}::${title.trim().toLowerCase()}` `` (normalize both halves so
    `./x` and `x` don't read as different findings). If it **equals `prevSet`** (the same issues keep
    coming back within this tier): **escalate, don't quit** — compare the sets by value (e.g. sort the keys
@@ -143,9 +167,10 @@ For each round in the current `tier`:
    not a target. If the guard fires on the **first** round of an escalated tier (so that tier applied zero
    fixes), say so in the report and suggest re-running `/review-workflow <that tier>` on a fresh branch.
 
-5. **Fix** — apply fixes for every `confirmed` critical/major/minor finding, using its `suggestedFix` as a
-   starting point (verify it's correct against the actual code — don't apply blindly). Also fix `nit`
-   findings when the change is low-risk and quick.
+5. **Fix** — apply fixes for every `confirmed` finding whose severity is in `enforce`, using its
+   `suggestedFix` as a starting point (verify it's correct against the actual code — don't apply blindly).
+   Also fix non-enforced findings opportunistically when the change is low-risk and quick, but they never
+   block the tier-clean check.
 
 6. **Commit** — stage only the files you actually edited (do **not** `git add -A` or `git add .` — the
    working tree may hold untracked secrets like `.env`; prefer explicit paths, or `git add -u` for
@@ -159,13 +184,14 @@ For each round in the current `tier`:
 
 7. Repeat from step 1.
 
-### 5. Completion report
+### 6. Completion report
 
 When the loop ends, summarize:
-- The ladder run (e.g. sonnet → opus), total rounds, and why it stopped (**final tier clean** / no-progress
-  / hit 8 rounds).
+- The ladder run (e.g. sonnet → opus) and enforced severities (e.g. critical+major), total rounds, and why
+  it stopped (**final tier clean** / no-progress / hit 8 rounds).
 - Issues fixed per severity across all rounds; commits made (one per round).
 - If stopped by a guard: list the remaining findings (file, severity, title) so the user can decide.
+- Note any non-enforced findings surfaced but intentionally left unfixed, so the user knows they exist.
 
 ## Notes
 
