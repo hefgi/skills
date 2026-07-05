@@ -73,7 +73,9 @@ const reviewerAgentType = args?.reviewerAgentType ?? 'general-purpose'
 // Build the review target as a shell diff spec + the file-discovery command,
 // depending on scope mode. `branch` diffs base..HEAD; `working` diffs the
 // working tree (staged + unstaged) against HEAD; `paths` restricts to args.paths.
-const paths = Array.isArray(args?.paths) ? args.paths : []
+// filter(Boolean): drop empty-string entries so a stray [''] doesn't slip past
+// the empty-paths guard below and become a fatal `git diff -- ''` (→ false-clean).
+const paths = (Array.isArray(args?.paths) ? args.paths : []).filter(Boolean)
 // POSIX single-quote escaping: close the quote, emit an escaped ', reopen — so a
 // path with an apostrophe (e.g. user's-code/x.ts) doesn't break the shell command
 // embedded in the reviewer prompts.

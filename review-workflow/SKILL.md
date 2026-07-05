@@ -48,10 +48,12 @@ When invoked with `/review-workflow $ARGUMENTS`:
 - Determine the current branch. If on `main`/`master`, create a working branch first (do not commit review
   fixes onto the default branch).
 - Resolve the absolute path to this skill's bundled workflow (`references/review-loop.mjs`, next to this
-  `SKILL.md`) — you need it for the `Workflow` call below. The install location varies (project
-  `.claude/skills/`, global `~/.claude/`, or a tessl cache path), so locate it rather than assuming:
+  `SKILL.md`) — you need it for the `Workflow` call below. The install location varies (global
+  `~/.claude/`, tessl's `~/.agents/skills/` which `~/.claude/skills/` symlinks to, or a project checkout),
+  so locate it rather than assuming. `-L` follows the tessl symlinks; trusted roots are searched before the
+  cwd so a project-local copy can't shadow the installed one:
   ```bash
-  find . ~/.claude ~/.tessl -type f -path '*review-workflow/references/review-loop.mjs' 2>/dev/null | head -1
+  find -L ~/.claude ~/.agents . -type f -path '*review-workflow/references/review-loop.mjs' 2>/dev/null | head -1
   ```
   Use the returned absolute path as `scriptPath`. If nothing is found, tell the user the skill's workflow
   file is missing and STOP.
@@ -145,9 +147,9 @@ For each round in the current `tier`:
    starting point (verify it's correct against the actual code — don't apply blindly). Also fix `nit`
    findings when the change is low-risk and quick.
 
-6. **Commit** — stage only the files you actually edited (do **not** `git add -A`/`-A` — the working tree
-   may hold untracked secrets like `.env`; prefer explicit paths, or `git add -u` for tracked-only), then
-   commit:
+6. **Commit** — stage only the files you actually edited (do **not** `git add -A` or `git add .` — the
+   working tree may hold untracked secrets like `.env`; prefer explicit paths, or `git add -u` for
+   tracked-only), then commit:
    ```bash
    git add <the files you fixed>   # or: git add -u
    git commit -m "Address code review feedback (round <globalRound>, <tier>)"
