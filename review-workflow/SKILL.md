@@ -4,9 +4,10 @@ description: >
   Run an iterative code-review loop: a review workflow scores the diff by severity,
   Claude fixes the issues at the chosen strictness, commits, then re-reviews — looping
   until the review comes back clean. Configurable at invocation: a model ladder
-  (recommended Sonnet → Opus; also sonnet, opus, or a custom models= list) and a
+  (recommended Sonnet → Opus; also sonnet, opus, or a custom models= list), a
   strictness set of severities to enforce (default critical+major+minor; e.g.
-  strictness=critical,major). Asks if unspecified. Project-agnostic; any git repo. Use
+  strictness=critical,major), and a per-tier round cap (rounds=3/5/10 or until-fixed).
+  Asks if unspecified. Project-agnostic; any git repo. Use
   when the user asks to review-and-fix in a loop, do a feedback pass, or "keep
   reviewing until clean".
 invocations:
@@ -16,7 +17,7 @@ tags:
   - workflow
   - git
   - quality
-version: 1.2.0
+version: 1.3.0
 ---
 
 # Review Workflow Skill
@@ -36,6 +37,7 @@ subagents run in isolated contexts. So the loop is split:
 | Re-review (round N+1) | **the bundled workflow** |
 | Escalate models cheap → smart | **you (the main agent)** — run each tier of the chosen ladder to clean |
 | Decide which severities to fix/enforce | **you (the main agent)** — the chosen strictness set |
+| Cap the rounds per tier | **you (the main agent)** — `maxRounds` (3/5/10 or until-fixed, ceiling 20) |
 
 You drive the outer loop; the workflow is the per-round review engine you call. The workflow is invoked
 directly from this skill's bundled path — **nothing is written into the user's repo.**
@@ -109,11 +111,9 @@ Then run the ladder:
 globalRound = 0
 for tier in tiers:
     prevSet = null                # reset the no-progress guard at the start of EACH tier
+    tierRound = 0                 # reset the per-tier round counter (see maxRounds, step 5)
     run the per-tier loop below with reviewModel = tier
 ```
-
-You can ask the scope, model, and strictness questions together in a single `AskUserQuestion` call (it
-takes multiple questions) — that still counts as asking "once".
 
 ### 4. Choose strictness (which severities to enforce)
 
@@ -133,15 +133,38 @@ default; unchanged from prior behavior). The user ticks exactly the severities t
 e.g. `critical` + `major` + `nit` to skip minor). At least `critical` should be selected; if the user picks
 nothing, fall back to the default.
 
-### 5. The per-tier loop (round-by-round, shared cap of 8 rounds across all tiers)
+### 5. Choose max rounds (the per-tier round cap)
 
-For each round in the current `tier`:
+`maxRounds` caps how many review rounds run **per tier** (it resets at the start of each tier). The loop
+still stops early the moment a tier is enforced-clean or the no-progress guard trips — `maxRounds` is just
+the ceiling.
 
-1. **Review** — call the bundled workflow:
+Resolve `maxRounds` from `$ARGUMENTS`:
+
+| In `$ARGUMENTS` | Resolved `maxRounds` |
+|-----------------|----------------------|
+| `rounds=3` / `rounds=5` / `rounds=10` (or any N) | that number |
+| `rounds=until` | run until fixed — capped at the **20**-round safety ceiling |
+| *(absent)* | ask, defaulting to **run until fixed** |
+
+If no round count is present in `$ARGUMENTS`, ask with **one** `AskUserQuestion` offering (recommended
+first): **Run until fixed** *(Recommended, ceiling 20)*, **3**, **5**, **10**. "Run until fixed" sets
+`maxRounds = 20` (a hard safety ceiling — a growing diff may keep surfacing findings and never fully
+converge, so it must be bounded).
+
+You can ask scope, model, strictness, and max-rounds together in a single `AskUserQuestion` call — still
+"once".
+
+### 6. The per-tier loop (`maxRounds` cap per tier; resets each tier)
+
+Track `tierRound` (the round number **within the current tier**, reset to 0 when a tier starts) alongside
+`globalRound` (used only for commit-message labelling). For each round in the current `tier`:
+
+1. **Review** — increment both counters (`++tierRound`, `++globalRound`), then call the bundled workflow:
    ```
    Workflow({
      scriptPath: "<this-skill-dir>/references/review-loop.mjs",
-     args: { scopeMode, round: ++globalRound, paths, reviewModel: tier, reviewerAgentType }
+     args: { scopeMode, round: globalRound, paths, reviewModel: tier, reviewerAgentType }
      // reviewerAgentType from step 1 (omit/undefined → workflow uses general-purpose).
      // include base only if the user pinned one; mechanicsModel defaults to haiku.
      // Optional: pass focus:"<text>" to weight the reviewers toward a concern the
@@ -167,12 +190,12 @@ For each round in the current `tier`:
    report. Then set `prevSet` to the current set for the next round. `prevSet` starts `null` at each tier
    (set in the ladder above), so round 1 of a tier never falsely trips this.
 
-4. **Iteration guard** — if `globalRound >= 8`, stop and report the remaining findings. (`>=`, not `===`,
-   so the cap can't be skipped past if an escalation lands `globalRound` on 9.) This caps the run at ~8
-   *reviews* (at most one extra if a tier escalation happens to run a 9th review before the guard fires);
-   the final review's findings are reported but not fixed/committed. That's intentional — a hard backstop,
-   not a target. If the guard fires on the **first** round of an escalated tier (so that tier applied zero
-   fixes), say so in the report and suggest re-running `/review-workflow <that tier>` on a fresh branch.
+4. **Iteration guard** — if `tierRound >= maxRounds`, this tier has hit its cap → **break** to the next
+   tier (or, if this is the last tier, stop and report). The findings from this capped review are reported
+   but not fixed/committed on this tier. `maxRounds` resets per tier, so with `sonnet→opus` and
+   `maxRounds=5` you get up to 5 sonnet rounds *and* up to 5 opus rounds. (For "run until fixed",
+   `maxRounds` is 20 — a hard ceiling so a non-converging diff can't loop forever.) If the cap fires on the
+   **first** round of an escalated tier (so that tier applied zero fixes), say so in the report.
 
 5. **Fix** — apply fixes for every `confirmed` finding whose severity is in `enforce`, using its
    `suggestedFix` as a starting point (verify it's correct against the actual code — don't apply blindly).
@@ -191,12 +214,12 @@ For each round in the current `tier`:
 
 7. Repeat from step 1.
 
-### 6. Completion report
+### 7. Completion report
 
 When the loop ends, summarize:
-- The ladder run (e.g. sonnet → opus), the reviewer agent used (`code-reviewer` or `general-purpose`), and
-  enforced severities (e.g. critical+major); total rounds, and why it stopped (**final tier clean** /
-  no-progress / hit 8 rounds).
+- The ladder run (e.g. sonnet → opus), the reviewer agent used (`code-reviewer` or `general-purpose`),
+  enforced severities (e.g. critical+major), and `maxRounds`; total rounds run, and why it stopped
+  (**final tier clean** / no-progress / hit the `maxRounds` cap).
 - Issues fixed per severity across all rounds; commits made (one per round).
 - If stopped by a guard: list the remaining findings (file, severity, title) so the user can decide.
 - Note any non-enforced findings surfaced but intentionally left unfixed, so the user knows they exist.

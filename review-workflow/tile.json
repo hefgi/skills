@@ -1,6 +1,6 @@
 {
   "name": "hefgi/review-workflow",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "private": false,
   "summary": "Iterative code-review loop — a review workflow scores the diff by severity; Claude fixes critical/major/minor issues, commits each round, and re-reviews until clean. Project-agnostic, any git repo.",
   "skills": {
