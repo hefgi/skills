@@ -16,7 +16,7 @@ tags:
   - workflow
   - git
   - quality
-version: 1.1.0
+version: 1.2.0
 ---
 
 # Review Workflow Skill
@@ -59,6 +59,12 @@ When invoked with `/review-workflow $ARGUMENTS`:
   ```
   Use the returned absolute path as `scriptPath`. If nothing is found, tell the user the skill's workflow
   file is missing and STOP.
+- **Pick the reviewer agent.** The workflow reviews with a subagent; it must be a **runtime-registered
+  agent type**, not a skill or an on-disk agent file. Check your available agent types (the ones you can
+  actually spawn): if a **`code-reviewer`** agent is available in this project, set `reviewerAgentType =
+  "code-reviewer"` so the review uses the project's specialized reviewer; otherwise leave it unset and the
+  workflow defaults to `general-purpose`. (Only agents in the live registry work — a project's PR-review
+  *skill* or an unregistered `code-reviewer.md` cannot be used as the reviewer.)
 
 ### 2. Ask scope (once)
 
@@ -135,7 +141,8 @@ For each round in the current `tier`:
    ```
    Workflow({
      scriptPath: "<this-skill-dir>/references/review-loop.mjs",
-     args: { scopeMode, round: ++globalRound, paths, reviewModel: tier }
+     args: { scopeMode, round: ++globalRound, paths, reviewModel: tier, reviewerAgentType }
+     // reviewerAgentType from step 1 (omit/undefined → workflow uses general-purpose).
      // include base only if the user pinned one; mechanicsModel defaults to haiku.
      // Optional: pass focus:"<text>" to weight the reviewers toward a concern the
      // user called out in $ARGUMENTS.
@@ -187,8 +194,9 @@ For each round in the current `tier`:
 ### 6. Completion report
 
 When the loop ends, summarize:
-- The ladder run (e.g. sonnet → opus) and enforced severities (e.g. critical+major), total rounds, and why
-  it stopped (**final tier clean** / no-progress / hit 8 rounds).
+- The ladder run (e.g. sonnet → opus), the reviewer agent used (`code-reviewer` or `general-purpose`), and
+  enforced severities (e.g. critical+major); total rounds, and why it stopped (**final tier clean** /
+  no-progress / hit 8 rounds).
 - Issues fixed per severity across all rounds; commits made (one per round).
 - If stopped by a guard: list the remaining findings (file, severity, title) so the user can decide.
 - Note any non-enforced findings surfaced but intentionally left unfixed, so the user knows they exist.
@@ -197,11 +205,14 @@ When the loop ends, summarize:
 
 - **Project-agnostic** — no repo-specific rules baked in; the workflow reads the nearest `CLAUDE.md` and
   treats its conventions as review criteria.
-- **Reviewer agent** — the workflow reviews with the `general-purpose` workflow subagent by default, so it
-  runs anywhere. (Workflow subagents resolve agent types against the runtime registry, not agent files on
-  disk, so a repo/plugin `code-reviewer.md` is *not* usable here.) If a custom review agent is registered
-  at runtime, pass its name via `reviewerAgentType` in `args`. If every reviewer fails, the workflow throws
-  rather than reporting a false "clean" — so a broken review can never be mistaken for a passing one.
+- **Reviewer agent** — the skill auto-detects a runtime-registered `code-reviewer` agent (step 1) and uses
+  it when present, so on projects that ship one (e.g. onyx) the review uses that specialized reviewer;
+  otherwise it falls back to the `general-purpose` workflow subagent, so it runs anywhere. Only **live
+  agent types** qualify — workflow subagents resolve `agentType` against the runtime registry, not against
+  agent files on disk or skills, so a project's PR-review *skill* or an unregistered `code-reviewer.md`
+  cannot be the reviewer. You can also force a specific agent by passing `reviewerAgentType` in `$ARGUMENTS`.
+  If every reviewer fails, the workflow throws rather than reporting a false "clean" — so a broken review
+  can never be mistaken for a passing one.
 - **Model tiering (cost-efficient, configurable)** — mechanical work (scope, file-listing) runs on
   **Haiku**; the review ladder is chosen at invocation (default **Sonnet → Opus**; also `sonnet`, `opus`,
   or an explicit `models=…` list — see step 3). Each review round's verify phase runs on the same tier as
