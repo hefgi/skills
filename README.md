@@ -8,6 +8,7 @@ A collection of AI coding agent skills for various tools and services.
 |-------|-------------|------------|-------|
 | [shortcut](./shortcut/) | Interact with Shortcut stories and epics via the `short` CLI | `/shortcut` | [![tessl](https://img.shields.io/endpoint?url=https%3A%2F%2Fapi.tessl.io%2Fv1%2Fbadges%2Fhefgi%2Fshortcut)](https://tessl.io/registry/hefgi/shortcut) |
 | [ponder](./ponder/) | Build EVM blockchain data indexers using Ponder (ponder.sh) | `/ponder` | [![tessl](https://img.shields.io/endpoint?url=https%3A%2F%2Fapi.tessl.io%2Fv1%2Fbadges%2Fhefgi%2Fponder)](https://tessl.io/registry/hefgi/ponder) |
+| [review-workflow](./review-workflow/) | Iterative code-review loop until the review comes back clean | `/review-workflow` | [![tessl](https://img.shields.io/endpoint?url=https%3A%2F%2Fapi.tessl.io%2Fv1%2Fbadges%2Fhefgi%2Freview-workflow)](https://tessl.io/registry/hefgi/review-workflow) |
 
 ## Installation
 
@@ -23,6 +24,7 @@ claude plugin install <skill-name>
 ```bash
 npx tessl i hefgi/shortcut
 npx tessl i hefgi/ponder
+npx tessl i hefgi/review-workflow
 ```
 
 ### Using Skills.sh
@@ -30,6 +32,7 @@ npx tessl i hefgi/ponder
 ```bash
 npx skills add https://github.com/hefgi/skills --skill shortcut
 npx skills add https://github.com/hefgi/skills --skill ponder
+npx skills add https://github.com/hefgi/skills --skill review-workflow
 ```
 
 ## Adding a New Skill

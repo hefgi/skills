@@ -4,26 +4,67 @@ permissions:
   id-token: write
   contents: read
 
+# NOTE: tesslio/publish is pinned to @main below. For supply-chain safety
+# (TESSL_API_TOKEN is passed to it), consider pinning to a released tag or a
+# specific commit SHA once one is known, and bumping it deliberately.
+
 on:
   push:
     branches:
       - main
 
 jobs:
+  # Detect which tile(s) changed; each publish job gates on its own filter. The
+  # workflow always starts on a push to main and the per-job `if:` conditions
+  # decide what actually publishes — one place to update when adding a tile.
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      shortcut: ${{ steps.filter.outputs.shortcut }}
+      ponder: ${{ steps.filter.outputs.ponder }}
+      review-workflow: ${{ steps.filter.outputs.review-workflow }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            shortcut:
+              - 'shortcut/**'
+            ponder:
+              - 'ponder/**'
+            review-workflow:
+              - 'review-workflow/**'
+
   publish-shortcut:
+    needs: changes
+    if: needs.changes.outputs.shortcut == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
       - uses: tesslio/publish@main
         with:
           token: ${{ secrets.TESSL_API_TOKEN }}
           path: './shortcut'
 
   publish-ponder:
+    needs: changes
+    if: needs.changes.outputs.ponder == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
       - uses: tesslio/publish@main
         with:
           token: ${{ secrets.TESSL_API_TOKEN }}
           path: './ponder'
+
+  publish-review-workflow:
+    needs: changes
+    if: needs.changes.outputs.review-workflow == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: tesslio/publish@main
+        with:
+          token: ${{ secrets.TESSL_API_TOKEN }}
+          path: './review-workflow'
