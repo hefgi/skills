@@ -23,6 +23,7 @@ jobs:
       shortcut: ${{ steps.filter.outputs.shortcut }}
       ponder: ${{ steps.filter.outputs.ponder }}
       review-workflow: ${{ steps.filter.outputs.review-workflow }}
+      job-apply: ${{ steps.filter.outputs.job-apply }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
@@ -35,6 +36,8 @@ jobs:
               - 'ponder/**'
             review-workflow:
               - 'review-workflow/**'
+            job-apply:
+              - 'job-apply/**'
 
   publish-shortcut:
     needs: changes
@@ -68,3 +71,14 @@ jobs:
         with:
           token: ${{ secrets.TESSL_API_TOKEN }}
           path: './review-workflow'
+
+  publish-job-apply:
+    needs: changes
+    if: needs.changes.outputs.job-apply == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: tesslio/publish@main
+        with:
+          token: ${{ secrets.TESSL_API_TOKEN }}
+          path: './job-apply'
