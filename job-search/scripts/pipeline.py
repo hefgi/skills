@@ -445,6 +445,7 @@ def cmd_mine(args) -> int:
 
     platforms = Counter()
     tracks = Counter()
+    per_company = Counter()
     companies: dict[str, str] = {}
     titles: dict[str, str] = {}
     boards: set[str] = set()
@@ -462,6 +463,7 @@ def cmd_mine(args) -> int:
         company = (row.get("company") or "").strip()
         if company:
             companies.setdefault(normalize_company(company), company)
+            per_company[normalize_company(company)] += 1
         role = (row.get("role") or "").strip()
         if role:
             titles.setdefault(slug(role), role)
@@ -483,10 +485,16 @@ def cmd_mine(args) -> int:
             # is still one company to avoid, and a repeated list is noise a user
             # then has to hand-deduplicate.
             if not any(c["company_key"] == normalize_company(company) for c in cooldown):
+                stated = re.search(r"(?:cap\w*(?:\s+\w+){0,3}?|limit of)\s+(\d+)", notes)
                 cooldown.append({
                     "company": company,
                     "company_key": normalize_company(company),
                     "evidence": row.get("notes", "")[:200],
+                    # A cap is only a reason to skip a board once it is reached.
+                    # Reporting the stated limit next to the number actually sent
+                    # stops a mention of "caps at 3" from silently blocking a
+                    # board the user has used once.
+                    "stated_cap": int(stated.group(1)) if stated else None,
                 })
         if status in {"failed", "incomplete", "draft"}:
             retryable.append({
@@ -495,6 +503,14 @@ def cmd_mine(args) -> int:
                 "status": status,
                 "notes": row.get("notes", ""),
             })
+
+    for entry in cooldown:
+        entry["applications_logged"] = per_company[entry["company_key"]]
+        cap = entry.get("stated_cap")
+        # Advisory only. The user decides; mining just stops them guessing.
+        entry["cap_reached"] = (
+            None if cap is None else entry["applications_logged"] >= cap
+        )
 
     summary = {
         "applications": len(rows),
@@ -516,9 +532,26 @@ def cmd_mine(args) -> int:
                 target_titles.update(t.strip().lower() for t in match.group(1).split(","))
         # The delta is the point of mining: titles the user applied to but never
         # wrote down as a target are exactly what a search would otherwise miss.
+        #
+        # Match on whole words, not substrings. A bare `in` test lets a short
+        # abbreviation swallow an unrelated title: "cto" sits inside
+        # "Engineering Director", which hid a real leadership title from the
+        # delta until an eval caught it. A missed delta entry is a query the
+        # user never runs again.
+        def covered(title: str) -> bool:
+            words = re.findall(r"[a-z0-9]+", title.lower())
+            for target in target_titles:
+                target_words = re.findall(r"[a-z0-9]+", target)
+                if not target_words:
+                    continue
+                # Contiguous run of the target's words inside the title.
+                for i in range(len(words) - len(target_words) + 1):
+                    if words[i:i + len(target_words)] == target_words:
+                        return True
+            return False
+
         summary["titles_not_in_targets"] = sorted(
-            t for t in titles.values()
-            if not any(tt and tt in t.lower() for tt in target_titles)
+            t for t in titles.values() if not covered(t)
         )
 
     print(json.dumps(summary, indent=2))
@@ -812,7 +845,7 @@ def cmd_report(args) -> int:
     if args.blocked:
         lines += ["", "## Sources blocked", "",
                   "Blocked is not the same as empty. These were not swept:", ""]
-        for entry in as_list(args.blocked):
+        for entry in args.blocked:
             lines.append(f"- {entry}")
 
     new_rows = [r for r in run_rows if r.get("status") == "new"]
@@ -897,7 +930,10 @@ def main() -> int:
     p = sub.add_parser("report", help="render a run report")
     p.add_argument("--pipeline", required=True)
     p.add_argument("--run-id")
-    p.add_argument("--blocked", help="comma-separated sources that could not be swept")
+    p.add_argument("--blocked", action="append", default=[],
+                   help="a source that could not be swept; repeat per source. "
+                        "Repeatable rather than comma-separated because a "
+                        "blocked message usually contains a URL and a comma.")
     p.add_argument("--out")
     p.set_defaults(func=cmd_report)
 
