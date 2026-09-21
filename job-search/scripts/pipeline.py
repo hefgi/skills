@@ -816,7 +816,29 @@ def cmd_reconcile(args) -> int:
 
 def cmd_report(args) -> int:
     rows = sort_rows(read_csv(Path(args.pipeline)))
-    run_rows = [r for r in rows if r.get("run_id") == args.run_id] if args.run_id else rows
+
+    # A row this run touched, not only a row this run created. An expired
+    # posting that reappears keeps the run_id of the sweep that first found it,
+    # so selecting on run_id alone hides the most interesting row in the run:
+    # a job that came back from the dead and is actionable again.
+    if args.run_id:
+        touched = args.today or date.today().isoformat()
+        run_rows = [
+            r for r in rows
+            if r.get("run_id") == args.run_id or r.get("last_seen") == touched
+        ]
+    else:
+        run_rows = rows
+
+    # Only rows upsert actually revived. A row from an earlier run that was
+    # simply seen again is not news and belongs in neither section, so key on
+    # the note upsert writes rather than on "old run_id, status new".
+    reappeared = [
+        r for r in run_rows
+        if r.get("run_id") != args.run_id
+        and r.get("status") == "new"
+        and "reappeared" in (r.get("notes") or "")
+    ] if args.run_id else []
 
     by_status = Counter(r.get("status", "") for r in run_rows)
     by_source = Counter(r.get("source", "") for r in run_rows)
@@ -848,7 +870,19 @@ def cmd_report(args) -> int:
         for entry in args.blocked:
             lines.append(f"- {entry}")
 
-    new_rows = [r for r in run_rows if r.get("status") == "new"]
+    if reappeared:
+        lines += ["", "## Reappeared", "",
+                  "Postings that had expired and are live again. They kept the "
+                  "run id of the sweep that first found them.", "",
+                  "| Track | Company | Role | Source | URL |", "|---|---|---|---|---|"]
+        for row in reappeared:
+            lines.append(f"| {row.get('track','')} | {row.get('company','')} | "
+                         f"{row.get('role','')} | {row.get('source','')} | {row.get('url','')} |")
+
+    reappeared_keys = {r.get("job_key") for r in reappeared}
+    new_rows = [r for r in run_rows
+                if r.get("status") == "new"
+                and r.get("job_key") not in reappeared_keys]
     if new_rows:
         lines += ["", "## New", "", "| Track | Company | Role | Source | URL |", "|---|---|---|---|---|"]
         for row in new_rows:
@@ -930,6 +964,8 @@ def main() -> int:
     p = sub.add_parser("report", help="render a run report")
     p.add_argument("--pipeline", required=True)
     p.add_argument("--run-id")
+    p.add_argument("--today", help="override the date used to pick rows this run "
+                                   "touched; for tests and fixtures")
     p.add_argument("--blocked", action="append", default=[],
                    help="a source that could not be swept; repeat per source. "
                         "Repeatable rather than comma-separated because a "
