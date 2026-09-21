@@ -31,9 +31,14 @@ scripts/pipeline.py reconcile --pipeline "$W/search/pipeline.csv" \
                               --log "$W/applications/log.csv"
 ```
 
-This pulls anything applied to since the last sweep into the pipeline as
-`applied`. Running it first is what guarantees a job is never offered twice: by
-the time new rows are evaluated, everything already submitted is marked.
+This marks rows **already in the pipeline** that have since been applied to. It
+does not back-fill the whole application log, so a reconcile reporting `0` on a
+log of a hundred applications is normal and not a failure: it means none of them
+matched a row the pipeline was already tracking. Jobs applied to but never in the
+pipeline are caught later, by axis-1 dedup during `upsert`.
+
+Running it first is what guarantees a job is never offered twice: by the time new
+rows are evaluated, everything already submitted is marked.
 
 Pick a run id: `<ISO date>-<n>`, incrementing `n` if a sweep already ran today.
 
@@ -140,6 +145,18 @@ invocation is a new process, so nothing in JavaScript persists. Re-serialize the
 full accumulated list rather than appending one source's rows, because a partial
 file that omits earlier sources loses exactly what the checkpoint exists to keep.
 
+**Checkpoint the blocked sources too.** A blocked source contributes no rows, so
+it exists only in your head between here and the report. If the run dies in
+between, the harvest survives and the blocked list does not, which is the one
+fact this skill is most insistent on not losing. Keep them alongside the rows,
+in a file the next round can read:
+
+```json
+{"rows": [...], "blocked": ["linkedin: challenge at https://..."]}
+```
+
+Feed `rows` to `upsert` and `blocked` to `report`.
+
 Extract the fields listed under [Harvest format](#harvest-format). Anything
 missing beyond those is fine: `pipeline.py` fills sensible defaults, and a
 results page genuinely does not carry a full posting body. Do not open every
@@ -149,6 +166,18 @@ that `job-apply` will read properly at application time anyway.
 **Do not filter while sweeping.** Collect everything with title similarity and
 let `upsert` apply the blockers. One place deciding what gets dropped is what
 makes the run report's counts true.
+
+**A track restriction is a planning decision, not a filter.** When the user asks
+for one track, that narrows the query terms in Phase B: you run
+`query_terms_fde` and not `query_terms_leadership`. It does not mean discarding
+a role a source hands back. Those are different things and conflating them
+breaks one rule or the other.
+
+So a leadership title arriving from a board you swept for FDE terms is kept, and
+`upsert` tracks it as `leadership`. It is a real opening the user can act on, and
+throwing it away because of how the query was phrased would lose a job for a
+bookkeeping reason. Say in the report that the run was scoped to one track, so
+the counts are read in that light.
 
 ## Phase E: upsert
 
@@ -245,6 +274,14 @@ them tells the user a board is dry when it is merely guarded.
 If the user takes control of the browser, or the task space becomes inactive or
 unassigned, stop. Do not retry or route around it. Keep the partial, say which
 sources were completed, and pick the sweep up in the same space afterwards.
+
+**A task space that no longer exists is a different case.** `task space not
+found` means there is nothing to resume and nothing to hand back, so the rule
+against opening a new space to escape a stuck page does not apply: there is no
+stuck page. Open a fresh space, say so, and carry on from the checkpoint. Check
+`listTaskSpaces()` first to be sure it is gone rather than merely busy, because
+recovering from a space the user is still using would take the browser out from
+under them.
 
 ## Harvest format
 

@@ -202,6 +202,12 @@ search:
   default_track:             # empty sweeps every track
 ```
 
+**`profile/search.md` wins when the two disagree.** `max_new_rows_per_run`
+appears in both files, because pacing belongs with the other sourcing criteria
+and the config block predates it. The user edits `search.md` by hand far more
+often, so that is the one whose value to trust, and the one to change. Say which
+you used when they differ, rather than picking silently.
+
 A sweep opens its own ego lite task space, named for the run, and does not share
 one with an application in progress. Nothing about the browser belongs in this
 config: the `ego-browser` skill owns that, and duplicating a setting here would
