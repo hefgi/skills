@@ -400,8 +400,8 @@ A subagent then reports the result and the row for the orchestrator to log:
 SUBMITTED | <company> | <role>
 confirmation: <the exact affirmative text, or the URL it landed on>
 screenshot: applications/<slug>/screenshots/confirmation.png
-log-row: <the twelve values in the order of the log.csv header, comma-joined,
-          quoting any field that contains a comma>
+log-row: <the twelve values in log.csv header order, one per line, labelled.
+          Do not pre-quote them; main writes the row with a CSV writer>
 ```
 
 **Finish the task space with `task.finish({ keep: [] })` once the application is
@@ -415,16 +415,42 @@ the orchestrator or the user may need to pick it up. Do not close it to tidy up.
 in `SUBMITTED`; it owns the file. Write `answers.md` and stop. Several processes
 appending to one CSV corrupt it.
 
-Otherwise, append one row to `applications/log.csv`. Quote any field containing a
-comma.
+Otherwise, append one row to `applications/log.csv`.
+
+**Write it with a real CSV writer, never by hand-quoting a `printf`.** The notes
+field routinely contains commas and quotation marks, and hand-quoting produces a
+row with the wrong number of fields, which corrupts the duplicate check every
+future application depends on.
 
 Every value below is a placeholder, including the date. Substitute all twelve
 columns from this application, in the header's order, and use today's actual
 date rather than copying the one shown:
 
 ```bash
-printf '%s\n' '2026-09-02,Acme Corp,Forward Deployed Engineer,https://...,greenhouse,fde,applied,applications/2026-09-02-acme-corp-forward-deployed-engineer/Lovelace_Acme_ForwardDeployedEngineer.pdf,applications/2026-09-02-acme-corp-forward-deployed-engineer/Lovelace_Acme_CoverLetter.pdf,<session-id>,2,' >> "$W/applications/log.csv"
+python3 - <<'PY'
+import csv
+row = [
+    "2026-09-02",                     # date
+    "Acme Corp",                      # company
+    "Forward Deployed Engineer",      # role
+    "https://...",                    # url
+    "greenhouse",                     # platform
+    "fde",                            # track
+    "applied",                        # status
+    "applications/<slug>/Lovelace_Acme_ForwardDeployedEngineer.pdf",
+    "applications/<slug>/Lovelace_Acme_CoverLetter.pdf",
+    "<session-id>",                   # session_id
+    "2",                              # questions_asked
+    "",                               # notes
+]
+assert len(row) == 12, len(row)
+with open("<workspace>/applications/log.csv", "a", newline="") as f:
+    csv.writer(f).writerow(row)
+PY
 ```
+
+The writer handles every quoting case for you, so put the raw text in `notes`
+without escaping it.
 
 Confirm the row landed and the column count matches the header, since a
 malformed row corrupts the duplicate check that every future application depends
@@ -490,7 +516,8 @@ When an orchestrator replies `ABORT`, report what state you are leaving behind:
 ABORTED | <company> | <role>
 space: <spaceId>   folder: applications/<slug>/
 reason: <why>
-log-row: <the twelve values, with status incomplete or failed, and the reason in notes>
+log-row: <the twelve values in header order, one per line, labelled, with
+          status incomplete or failed and the reason in notes. Do not pre-quote>
 ```
 
 Leave the task space open so the work is recoverable.

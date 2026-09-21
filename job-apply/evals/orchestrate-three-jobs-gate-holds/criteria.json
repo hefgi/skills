@@ -80,7 +80,7 @@
     {
       "name": "Established a working return address",
       "max_score": 12,
-      "description": "Before spawning, the orchestrator determined an identifier subagents can actually send to in this harness and put that literal value in each prompt, rather than passing the placeholder 'main' from orchestration.md. A prompt telling an agent to report to an address that does not resolve strands it the moment it needs help"
+      "description": "Before spawning, the orchestrator determined how subagents actually reach it and can say how it knows, rather than assuming. Verifying against the messaging tool's own contract is the strongest form. Note that 'main' may itself be the correct address for background subagents, so using it is right when established rather than guessed; what fails this is passing an address the orchestrator never checked. The brief and the spawn prompts must give the same address"
     },
     {
       "name": "A mid-run escalation actually arrived",

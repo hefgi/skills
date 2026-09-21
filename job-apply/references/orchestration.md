@@ -8,15 +8,28 @@ You are the **orchestrator**, called `main` throughout this file. You do not
 drive a browser. You spawn agents, answer their questions, approve their
 submissions, and own the log.
 
-`main` is what this file calls you, not necessarily an address that resolves.
-Before spawning anything, work out how an agent can actually reach you in this
-harness and put that literal identifier in every prompt. A subagent that blocks
+**Establish how agents reach you before spawning anything, and verify it from
+the messaging tool's own contract rather than assuming.** A subagent that blocks
 mid-run and sends to a name that does not resolve is stranded: it gets an error
-with nowhere to go, and you learn nothing until it gives up. Do not assume the
-string `main` works, and do not let an agent guess from the sender label on
-messages it receives, which is typically an agent type rather than an address.
+with nowhere to go, and you learn nothing until it gives up.
 
-If you cannot establish a reachable address, say so and run the postings
+In a harness where background subagents address the parent conversation as
+`main`, that string is both this file's name for you and a real address, and
+nothing needs substituting. Say so in the brief in as many words, because an
+agent reading `main` in a document that uses angle-bracket placeholders
+elsewhere may reasonably take it for one and try to substitute something. Naming
+the collision costs a sentence and prevents a guess.
+
+Where the parent is not addressable that way, find the identifier that does
+resolve and put that literal value in the brief and in every prompt. Fixing only
+the prompts is a half fix: an agent that trusts the brief sends to the wrong
+place.
+
+Either way, tell agents never to reply to the sender label on an incoming
+message. That is typically an agent type, not an address, and sending to it
+fails.
+
+If you cannot establish a reachable address at all, say so and run the postings
 yourself in sequence. Fan-out without a return path is worse than serial work,
 because an agent that needs you has no way to ask and will either stall or
 decide alone.
@@ -97,6 +110,13 @@ next spawn, automatically, because it reads the skill rather than a copy.
 Date the file rather than overwriting a fixed name, so a stale brief is visibly
 stale, and so you are never rewriting a file that running agents are reading.
 
+**Write your real return address into the brief, not a placeholder**, and say
+how you established it. If that address happens to be the literal string `main`,
+say that it is a real address rather than a stand-in, so nobody substitutes
+something for it. The brief and the spawn prompts must agree: an agent that
+finds one address in its prompt and another in the brief will pick one, and it
+may not pick the one that works.
+
 Contents:
 
 ```markdown
@@ -116,14 +136,21 @@ Today: <YYYY-MM-DD>
 `profile/` and `qa/` hold decisions already made. A `#` comment above a key is
 binding: follow it, do not re-derive it, do not ask about it.
 
+## How to reach me
+Send with SendMessage(to="<address>"), exactly as written. This is a real
+address, established from the messaging tool's contract and confirmed working,
+not a placeholder to substitute. Use it for every message including replies.
+Never send to the sender label on a message you receive: that is an agent type
+and will not resolve.
+
 ## Scope
 Apply to exactly the one posting in your prompt. Do not spawn agents.
-Do not write to applications/log.csv. `main` owns it.
+Do not write to applications/log.csv. The orchestrator owns it.
 Do not edit anything in profile/, qa/, or cv/. They are read-only.
 
 ## The gate
-Fill and verify the form. Then STOP and send a SUBMIT-REQUEST to `main`.
-Submit only after `main` replies APPROVED.
+Fill and verify the form. Then STOP and send a SUBMIT-REQUEST.
+Submit only after the orchestrator replies APPROVED.
 
 ## Escalation
 Send `BLOCKED` and wait, on any of the triggers in `apply.md` under "When it
@@ -150,10 +177,9 @@ YOUR JOB:
 Name your ego-browser task space "<company>-<role-slug>" and print its numeric
 spaceId in every message to me.
 
-Report to me with SendMessage(to="<your resolvable identifier>"). Substitute the
-real one; do not leave a placeholder. I am your only route to the user.
-Use that same address every time, including when replying. The sender label on
-messages you receive is not an address and sending to it fails.
+Report to me with SendMessage(to="<address>"), the same one the brief gives.
+I am your only route to the user. Use it every time, including when replying,
+and never send to the sender label on an incoming message.
 ```
 
 Add anything posting-specific you know: a quirk of that ATS, a framing the user
