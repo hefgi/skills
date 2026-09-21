@@ -99,18 +99,32 @@ await page.waitForFunction(
   undefined,
   { timeout: 15000 },
 );
-const jobs = await page.evaluate((slug) =>
+const jobs = await page.evaluate(() =>
   [...document.querySelectorAll("a[href]")]
     .filter((a) => /^\/[^/]+\/[0-9a-f-]{36}/.test(a.getAttribute("href") || ""))
-    .map((a) => ({ role: a.innerText.trim(), url: a.href, slug })),
-  slug,
+    .map((a) => ({
+      // Read the parts separately. `a.innerText` concatenates the role with the
+      // location and work mode, and that composite would go straight into
+      // job_key and corrupt dedup for that posting forever.
+      role: a.querySelector("h3")?.innerText.trim() ?? a.innerText.split("\n")[0].trim(),
+      location: a.querySelectorAll("span")[0]?.innerText.trim() ?? "",
+      work_mode: (a.querySelectorAll("span")[1]?.innerText.trim() ?? "").toLowerCase(),
+      url: a.href,
+      // Take the slug from the posting's own href, not from the board queried.
+      slug: (a.getAttribute("href").match(/^\/([^/]+)\//) || [])[1] ?? "",
+    })),
 );
 ```
 
 **The company name is not on the board page.** Ashby renders the role, the
 location, and the work mode, and leaves the employer implicit. `upsert` refuses a
-row without a company, so take it from the slug you are sweeping rather than the
-page: you queried one board, so every posting on it belongs to that company.
+row without a company, so derive it from the slug.
+
+**Take the slug from each posting's href, not from the board you queried.** A
+board usually carries one company, but not always: a page can link postings under
+other slugs, and stamping the queried slug on all of them files several companies
+under one name and breaks dedup against the log. The slug, not the board, is the
+unit of company identity.
 
 Resolve the slug to a display name in this order, because `job_key` is derived
 from it and an inconsistent name splits one company into two:
@@ -119,6 +133,10 @@ from it and an inconsistent name splits one company into two:
    `pipeline.csv`. Existing rows are the authority.
 2. The board's own title or heading, when it names the employer.
 3. Title-cased slug as a last resort, and say in the report that you guessed.
+
+**Greenhouse has the same gap**, and the same ladder applies. Its API returns
+`title`, `location`, and `absolute_url` but no company name, so resolve the board
+slug the same way.
 
 ### Failure modes
 
@@ -200,24 +218,35 @@ await page.waitForFunction(
 );
 const cards = await page.evaluate(() =>
   [...document.querySelectorAll("[data-job-id]")].map((el) => {
-    // Climb to the list item. The metadata lines that carry location and any
-    // work-authorization notice are siblings of the card, not inside it, so
-    // reading the card alone silently loses them.
-    const item = el.closest("li") || el.parentElement || el;
-    return { id: el.getAttribute("data-job-id"), text: item.innerText };
+    // The metadata lines carrying location and any work-authorization notice
+    // are FOLLOWING SIBLINGS of the card's list item, not descendants of it.
+    // Walk forward to the next card, collecting what lies between.
+    const parts = [el.innerText];
+    let node = (el.closest("li") || el).nextElementSibling;
+    while (node && !node.matches?.("[data-job-id]")
+                && !node.querySelector?.("[data-job-id]")) {
+      parts.push(node.innerText);
+      node = node.nextElementSibling;
+    }
+    return { id: el.getAttribute("data-job-id"), text: parts.join("\n") };
   }).filter((c) => c.id),
 );
 ```
 
-**Extract from the list item, not the card.** The `[data-job-id]` element holds
-the role and the company; the location and any "must be authorized to work in
-the United States" line often sit outside it. A card-only read returns rows that
-look complete and are missing exactly the text the `us-work-auth` blocker tests,
-so a US-only posting sails through as a normal row.
+**Walk forward to the siblings; do not climb.** The `[data-job-id]` element holds
+the role and the company. The location and any "must be authorized to work in the
+United States" line sit *after* the card's list item, as siblings. Climbing with
+`closest("li")` reaches an ancestor, and an ancestor cannot contain a sibling, so
+that read returns rows that look complete while missing exactly the text the
+`us-work-auth` blocker tests. A US-only posting then enters the pipeline as an
+ordinary row, and the `location` blocker misses it too because the location was
+lost in the same breath.
 
-That gives the failure a visible signature: **a card with no location line means
-the extraction missed it, not that the posting has no location.** Treat a batch
-where every row lacks a location as a broken selector rather than as data.
+That failure is silent, which is what makes it dangerous, so it has a visible
+signature worth checking every run: **a card with no location means the
+extraction missed it, not that the posting has no location.** A batch where
+every row lacks a location is a broken selector, not data. Stop and fix the
+selector rather than upserting the batch.
 
 Parse the company and location out of the text in Node rather than in the page,
 so a layout change surfaces as a parse you can inspect rather than an empty
