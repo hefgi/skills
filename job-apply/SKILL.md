@@ -29,6 +29,11 @@ application, using a durable profile so the same facts are never re-entered.
 
 Every workflow depends on the workspace. Resolve it first.
 
+Finding jobs to apply to, rather than applying to one, is the `job-search`
+skill's work. The signal is whether there is a posting URL: one URL means apply,
+no URL and a request to look for roles means search. `job-search` writes a
+pipeline of postings into the same workspace and hands them here one at a time.
+
 Load these when the moment comes, not up front:
 
 | Read when | File |

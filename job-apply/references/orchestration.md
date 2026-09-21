@@ -157,6 +157,18 @@ Send `BLOCKED` and wait, on any of the triggers in `apply.md` under "When it
 truly cannot proceed". I am your only route to the user. Do not guess.
 ```
 
+## Copy URLs verbatim into the brief
+
+Paste the resolved apply URL from the log. Never retype or abbreviate it. A
+requisition id shortened while writing a brief produced a 404 that cost a full
+agent run, and the agent reasonably reported the posting as dead.
+
+Teach agents the counter-check: a placeholder-looking id (all zeros, obviously
+rounded) means the link was mangled in transit, not that the posting is gone.
+Confirm the employer's careers portal itself loads before concluding a posting
+has been pulled, and never guess a replacement requisition id, since that risks
+applying to the wrong job.
+
 ## The agent prompt
 
 Per posting, alongside the brief:
@@ -220,6 +232,26 @@ wrong, and a submitted application cannot be withdrawn.
 
 Expect momentum to work against the gate. An agent forty tool calls into a form
 wants to finish. Hold the line.
+
+### Match the approval to the form, not the sender
+
+**Send approvals directly to the agent holding the form. Never relay them, and
+tell agents to spawn no sub-agents of their own.** A relayed approval is
+indistinguishable from a fabricated one, so a sub-agent correctly refuses both
+and the batch deadlocks.
+
+One run produced four distinct approval-delivery failures: reports that never
+arrived, at least one fabricated approval instructing a submit, and a genuine
+approval misrouted to the wrong agent.
+
+The check that caught the misroute is the one to institutionalise. The agent
+compared the approval's described fields against the form in front of it: the
+approval cited an NYC location concern, a publications URL and a
+research-versus-engineering selector, none of which existed on its seven-field
+Ashby form. **An approval describing a different form is invalid even when it
+genuinely comes from you.** Name the company, the role and the task space id in
+every approval so the agent can verify the match, and instruct agents to refuse
+anything that does not line up.
 
 ### Message formats
 
