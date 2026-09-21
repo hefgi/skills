@@ -1,0 +1,11 @@
+{
+  "name": "hefgi/job-apply",
+  "version": "0.2.0",
+  "private": false,
+  "summary": "Tailor a CV and cover letter to a specific job posting and apply to it automatically in the browser. Use this skill whenever the user shares a job posting URL, asks to apply for a job, wants a CV or resume tailored to a specific role or company, wants a cover letter written for an application, asks to review or optimize their CV, or wants to track which jobs they have applied to. Also use it when the user mentions job hunting, job applications, LinkedIn job posts, Greenhouse, Lever, Ashby, Workday, or Easy Apply, even if they do not name this skill. Maintains a reusable profile so application answers, contact details, and target roles never need re-entering. Applies to many postings at once with parallel subagents. Built on RenderCV and ego-browser.",
+  "skills": {
+    "job-apply": {
+      "path": "SKILL.md"
+    }
+  }
+}
