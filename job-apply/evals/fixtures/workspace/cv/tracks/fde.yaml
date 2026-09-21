@@ -1,0 +1,44 @@
+track: fde
+headline: Forward Deployed Engineer, AI and Retrieval Systems
+
+section_order: [summary, experience, skills, education, certifications]
+
+summary: "Hands-on engineer with 14 years shipping customer-facing systems from zero to scale across analytics, fintech, and AI. Built and scaled an engineering org, then returned to delivery: now builds retrieval and agent systems directly with customers, owning them from scoping through production."
+
+# promote: its own entry. nest: a highlight under the named parent. merge: folded
+# into a merged_entries target. omit: hidden.
+experience:
+  Northwind Data (via Lovelace Consulting):
+    treatment: promote
+    lead_with: customer-facing delivery
+  Lovelace Consulting Ltd:
+    treatment: promote
+  Meridian Payments:
+    treatment: promote
+    position_override: VP of Engineering (hands-on)
+    # Code before org: the hands-on and delivery bullets lead, org-scaling last.
+    highlight_order: [hands-on, pipelines, lead-time, infrastructure, scaling]
+    drop_highlights: [series-b, ai-adoption-org, budget]
+  Kestrel Analytics:
+    treatment: promote
+    highlight_order: [platform, ingest, compliance]
+    drop_highlights: [team-growth]
+  Bramble Health:
+    treatment: omit          # short role, ended in a wind-down, weak signal here
+  Halcyon Systems:
+    treatment: merge
+    merge_into: Earlier roles
+  Ridgeline Software:
+    treatment: merge
+    merge_into: Earlier roles
+
+# Roles before 2018 collapse into one entry to save space.
+merged_entries:
+  Earlier roles:
+    position: Software Engineer
+    location: Manchester, UK
+    start_date: 2012-07
+    end_date: 2017-03
+    max_highlights: 2
+
+skills_groups: [AI & Agents, Full-Stack, Data & Infra]

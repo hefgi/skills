@@ -1,0 +1,37 @@
+track: leadership
+headline: Engineering Leader (VP / Head of Engineering)
+
+section_order: [summary, experience, skills, education, certifications, references]
+
+summary: "Engineering leader with 14 years building and scaling production systems across analytics, fintech, and AI. Scaled a payments engineering org from 12 to 35, owned a £2.8M budget, and rebuilt a data platform consolidating 8 systems and 40TB. Player-coach who still ships and now designs AI-agent systems in production."
+
+experience:
+  Northwind Data (via Lovelace Consulting):
+    treatment: nest
+    nest_under: Lovelace Consulting Ltd
+    nest_as: "**Forward Deployed Engineer, Northwind Data** (Feb to Aug 2026): delivered a retrieval and evaluation stack for an internal support assistant, working directly with the customer through to handover."
+  Lovelace Consulting Ltd:
+    treatment: promote
+    lead_with: advisory and client delivery
+  Meridian Payments:
+    treatment: promote
+    # Org signals first, hands-on last.
+    highlight_order: [scaling, budget, pipelines, lead-time, ai-adoption-org, series-b, hands-on]
+  Kestrel Analytics:
+    treatment: promote
+    highlight_order: [team-growth, platform, compliance]
+    max_highlights: 3
+  Bramble Health:
+    treatment: promote
+    max_highlights: 1
+  Halcyon Systems:
+    treatment: promote
+    max_highlights: 2
+  Ridgeline Software:
+    treatment: promote
+    max_highlights: 1
+
+skills_groups: [Leadership, AI & Agents, Data & Infra]
+
+references:
+- "Available on request."

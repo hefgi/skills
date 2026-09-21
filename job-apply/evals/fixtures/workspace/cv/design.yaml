@@ -1,0 +1,35 @@
+design:
+  theme: engineeringresumes
+  page:
+    size: a4
+    top_margin: 0.5in
+    bottom_margin: 0.5in
+    left_margin: 0.55in
+    right_margin: 0.55in
+    show_footer: true
+  colors:
+    name: rgb(20, 45, 80)
+    section_titles: rgb(20, 45, 80)
+    links: rgb(20, 45, 80)
+    connections: rgb(60, 60, 60)
+  typography:
+    alignment: left
+    font_size:
+      body: 9.5pt
+      name: 22pt
+  header:
+    connections:
+      separator: "|"
+      show_icons: false
+      display_urls_instead_of_usernames: true
+  section_titles:
+    type: with_full_line
+    space_above: 0.35cm
+    space_below: 0.2cm
+  sections:
+    space_between_regular_entries: 0.3cm
+    space_between_text_based_entries: 0.12cm
+  entries:
+    highlights:
+      bullet: "●"
+      space_between_items: 0.06cm

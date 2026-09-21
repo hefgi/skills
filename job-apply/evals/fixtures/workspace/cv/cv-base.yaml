@@ -1,0 +1,114 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/rendercv/rendercv/refs/tags/v2.8/schema.json
+#
+# SOURCE OF TRUTH for all career facts. Holds every fact, including ones that do
+# not appear on any single CV. Tracks and per-application overlays select from
+# this file and may re-emphasize, but never add a fact that is not here.
+cv:
+  name: Ada Lovelace
+  location: London, UK
+  email: ada@example.com
+  phone: "+442079460958"
+  website: https://ada.example.com
+  social_networks:
+  - network: LinkedIn
+    username: adalovelace-example
+  - network: GitHub
+    username: ada-example
+  sections:
+    summary:
+    - "Engineer and engineering leader with 14 years building production systems across analytics, fintech, and AI. Scaled an engineering org from 12 to 35, and has also been the only person writing the code. Now builds AI-agent systems for clients."
+    experience:
+    - company: Northwind Data (via Lovelace Consulting)
+      position: Forward Deployed Engineer
+      location: Remote
+      start_date: 2026-02
+      end_date: 2026-08
+      summary: "Client engagement delivering a retrieval and evaluation stack for an internal support assistant, working directly with the customer on scope and delivery."
+      highlights:
+      - "[retrieval] Built the retrieval layer over 200k support tickets, cutting median answer latency from 9s to 1.4s."
+      - "[evals] Set up an offline evaluation harness so the customer could measure answer quality before each release."
+      - "[customer] Ran weekly working sessions with the customer's support leads, translating vague complaints into testable requirements."
+      - "[handover] Wrote the runbook and trained two of their engineers to operate the system after handover."
+    - company: Lovelace Consulting Ltd
+      position: Founder & Engineer
+      location: London, UK
+      start_date: 2025-09
+      end_date: present
+      summary: "Independent engineering studio building AI and data systems for fintech and SaaS clients."
+      highlights:
+      - "[agents] Built a document-processing agent for a lending client, taking underwriting review from 30 minutes to under 5 per file."
+      - "[opensource] Open-sourced a small library for evaluating retrieval pipelines, now used by a handful of teams."
+      - "[advisory] Advise two early-stage founders on data architecture and hiring their first engineers."
+    - company: Meridian Payments
+      position: VP of Engineering
+      location: London, UK
+      start_date: 2022-06
+      end_date: 2025-08
+      summary: "Payments infrastructure for European SMEs. Led engineering, data, and platform, reporting to the CEO."
+      highlights:
+      - "[scaling] Scaled engineering from 12 to 35 across four squads; hired the first engineering managers and built the leveling framework."
+      - "[budget] Owned a **£2.8M engineering budget** and introduced ROI review for tooling and infrastructure spend."
+      - "[pipelines] Rebuilt the data platform (PostgreSQL, Kafka, dbt); consolidated **8 source systems and 40TB** into one warehouse."
+      - "[lead-time] Cut deploy time from **40 minutes to 6** through CI parallelisation and trunk-based development."
+      - "[ai-adoption-org] Rolled out coding assistants to 35 engineers with workshops and measured the effect on review time."
+      - "[infrastructure] Introduced infrastructure-as-code (Terraform, ArgoCD) alongside the platform team."
+      - "[series-b] Supported Series B diligence with the technical narrative and architecture review."
+      - "[hands-on] Stayed hands-on (~15%): wrote the reconciliation service and the incident tooling still in use."
+    - company: Kestrel Analytics
+      position: Founding Engineer
+      location: London, UK
+      start_date: 2018-03
+      end_date: 2022-05
+      summary: "Analytics platform for logistics operators. Employee number three; built the first version of the product."
+      highlights:
+      - "[platform] Architected and built the platform: Python services, React frontend, PostgreSQL, AWS; owned CI/CD and production operations."
+      - "[team-growth] Grew the engineering team to 9 and set the review and on-call practices."
+      - "[ingest] Built the ingestion layer handling 30M events a day from customer telematics."
+      - "[compliance] Owned SOC 2 readiness end to end, including evidence collection and the audit itself."
+    - company: Bramble Health
+      position: Senior Engineer
+      location: London, UK
+      start_date: 2017-04
+      end_date: 2018-02
+      summary: "Patient-scheduling software. Short engagement ending when the company wound down."
+      highlights:
+      - "Rebuilt the appointment scheduler, cutting double-bookings to near zero."
+      - "Introduced the first automated test suite."
+    - company: Halcyon Systems
+      position: Software Engineer
+      location: Manchester, UK
+      start_date: 2014-09
+      end_date: 2017-03
+      summary: "Enterprise integration consultancy."
+      highlights:
+      - "Delivered integration projects for three enterprise clients."
+      - "Built the internal deployment tooling adopted across the consultancy."
+      - "Mentored two junior engineers through their first year."
+      - "Ran the graduate technical interview process."
+    - company: Ridgeline Software
+      position: Junior Engineer
+      location: Manchester, UK
+      start_date: 2012-07
+      end_date: 2014-08
+      summary: "First engineering role, working on a logistics scheduling product."
+      highlights:
+      - "Maintained and extended the scheduling product's reporting module."
+      - "Automated the release checklist, removing a recurring manual step."
+    skills:
+    - label: AI & Agents
+      details: LangGraph, retrieval pipelines, evaluation harnesses, OpenAI and Anthropic APIs
+    - label: Leadership
+      details: org design, hiring and leveling, delivery metrics, budget ownership
+    - label: Full-Stack
+      details: Python, TypeScript, React, FastAPI, Node.js
+    - label: Data & Infra
+      details: PostgreSQL, Kafka, dbt, AWS, Terraform, CI/CD
+    education:
+    - institution: University of Manchester
+      area: Computer Science
+      degree: BSc
+      location: United Kingdom
+      start_date: 2009
+      end_date: 2012
+    certifications:
+    - bullet: AWS Solutions Architect Associate (2021) · Certified Kubernetes Application Developer (2019)

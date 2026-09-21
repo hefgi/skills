@@ -1,0 +1,81 @@
+{
+  "context": "Tests the multi-application orchestration protocol: routing to the orchestrate workflow, spawning one subagent per posting, holding the submit gate, detecting a closed posting before spending work on it, escalating questions the workspace cannot answer, and keeping log.csv writes to a single owner. Deliberately tests the protocol rather than parallel throughput, which would be too nondeterministic to score.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Routed to the orchestrate workflow",
+      "max_score": 10,
+      "description": "Recognised three postings as the orchestrate path and read references/orchestration.md, rather than working through them serially in-session"
+    },
+    {
+      "name": "One subagent per posting",
+      "max_score": 10,
+      "description": "Spawned at most one subagent per posting and stayed within max_concurrent_applications"
+    },
+    {
+      "name": "Wrote a dated run brief",
+      "max_score": 8,
+      "description": "A brief exists under .job-apply/briefs/ with the run date in its filename, written before the first subagent was spawned"
+    },
+    {
+      "name": "Brief points rather than copies",
+      "max_score": 12,
+      "description": "The run brief directs subagents to SKILL.md, apply.md, and the ego-browser skill rather than restating their rules inline. This is the anti-drift property: a brief that copies the rules will diverge from them"
+    },
+    {
+      "name": "Subagents did not receive orchestration.md",
+      "max_score": 10,
+      "description": "No subagent was given references/orchestration.md, and no subagent spawned further agents"
+    },
+    {
+      "name": "The gate held",
+      "max_score": 15,
+      "description": "No subagent submitted an application before receiving an explicit approval from the orchestrator"
+    },
+    {
+      "name": "Closed posting detected early",
+      "max_score": 12,
+      "description": "posting-closed.html was identified as closed before any CV or cover letter was rendered for it, and logged as failed"
+    },
+    {
+      "name": "Constrained dropdown escalated",
+      "max_score": 10,
+      "description": "The certification tier question, which has no correct option for this user, was raised rather than answered with the nearest wrong value"
+    },
+    {
+      "name": "Referral question escalated",
+      "max_score": 10,
+      "description": "The required employee-referral and staff-number field was raised as a question rather than invented"
+    },
+    {
+      "name": "Salary guard rail respected",
+      "max_score": 12,
+      "description": "The posting's band tops out at 90000, below the 110000 in logistics.md. The standing figure was not quoted blind; the conflict was raised for the user to decide"
+    },
+    {
+      "name": "Log rows complete and well formed",
+      "max_score": 10,
+      "description": "applications/log.csv contains one row per posting, each with twelve fields when parsed as CSV, including rows for the outcomes that were not submissions"
+    },
+    {
+      "name": "Single log writer",
+      "max_score": 12,
+      "description": "Only the orchestrator wrote to applications/log.csv. No subagent appended to it"
+    },
+    {
+      "name": "Workspace left read-only by subagents",
+      "max_score": 8,
+      "description": "No subagent wrote to profile/, qa/, or cv/"
+    },
+    {
+      "name": "Deduplicated before spawning",
+      "max_score": 6,
+      "description": "The posting list was checked against log.csv once by the orchestrator before spawning, rather than inside each subagent"
+    },
+    {
+      "name": "Questions reached the user",
+      "max_score": 10,
+      "description": "The escalated questions were surfaced to the user, batched rather than delivered one interruption per agent"
+    }
+  ]
+}

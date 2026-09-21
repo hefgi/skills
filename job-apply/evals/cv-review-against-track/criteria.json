@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent gives a specific, honest, prioritised CV critique against a named track, finding the problems planted in the fixture rather than offering generic advice, and offering fixes rather than silently rewriting the user's source of truth.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Specific, not generic",
+      "max_score": 12,
+      "description": "Names specific bullets or roles by their location in the CV rather than giving only generic CV advice that would apply to any document"
+    },
+    {
+      "name": "Leads with the real problem",
+      "max_score": 10,
+      "description": "Opens with the most serious issue rather than with praise or a warm-up paragraph"
+    },
+    {
+      "name": "Flags the Bramble Health framing",
+      "max_score": 10,
+      "description": "Identifies the Bramble Health entry as a liability for a hands-on track, either for its wind-down framing or because it volunteers a negative the reader did not ask for"
+    },
+    {
+      "name": "Notices a timeline problem",
+      "max_score": 10,
+      "description": "Notices at least one genuine date issue. Northwind Data (2026-02 to 2026-08) overlaps Lovelace Consulting (2025-09 to present), already reconciled by the 'via Lovelace Consulting' clause; Bramble Health (from 2017-04) sits adjacent to Halcyon Systems (to 2017-03). A strong review either confirms the Northwind reconciliation is adequate or flags the Bramble/Halcyon adjacency"
+    },
+    {
+      "name": "Flags tool-listing bullets",
+      "max_score": 10,
+      "description": "Flags at least one bullet that lists technologies without an outcome attached"
+    },
+    {
+      "name": "Concrete replacements",
+      "max_score": 12,
+      "description": "Gives concrete replacement wording for at least three of its fixes, not just descriptions of what is wrong with the current text"
+    },
+    {
+      "name": "Prioritised",
+      "max_score": 8,
+      "description": "Produces an ordered list by impact rather than an unordered dump of observations"
+    },
+    {
+      "name": "Offers rather than applies",
+      "max_score": 12,
+      "description": "Offers to apply the fixes and waits, rather than editing the CV unprompted"
+    },
+    {
+      "name": "Did not modify cv-base.yaml",
+      "max_score": 12,
+      "description": "cv/cv-base.yaml is byte-identical to the fixture after the run"
+    },
+    {
+      "name": "Track mismatch signal",
+      "max_score": 8,
+      "description": "Mentions that the VP of Engineering title reads as a risk signal for a hands-on individual-contributor role"
+    }
+  ]
+}
