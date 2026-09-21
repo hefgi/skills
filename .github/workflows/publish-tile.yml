@@ -24,6 +24,7 @@ jobs:
       ponder: ${{ steps.filter.outputs.ponder }}
       review-workflow: ${{ steps.filter.outputs.review-workflow }}
       job-apply: ${{ steps.filter.outputs.job-apply }}
+      job-search: ${{ steps.filter.outputs.job-search }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
@@ -38,6 +39,8 @@ jobs:
               - 'review-workflow/**'
             job-apply:
               - 'job-apply/**'
+            job-search:
+              - 'job-search/**'
 
   publish-shortcut:
     needs: changes
@@ -82,3 +85,14 @@ jobs:
         with:
           token: ${{ secrets.TESSL_API_TOKEN }}
           path: './job-apply'
+
+  publish-job-search:
+    needs: changes
+    if: needs.changes.outputs.job-search == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: tesslio/publish@main
+        with:
+          token: ${{ secrets.TESSL_API_TOKEN }}
+          path: './job-search'
