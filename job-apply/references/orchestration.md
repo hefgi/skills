@@ -135,6 +135,8 @@ Name your ego-browser task space "<company>-<role-slug>" and print its numeric
 spaceId in every message to me.
 
 Report to me with SendMessage(to="main"). I am your only route to the user.
+Always send to "main", including when replying. The sender label on messages
+you receive is not a valid address and sending to it fails.
 ```
 
 Add anything posting-specific you know: a quirk of that ATS, a framing the user

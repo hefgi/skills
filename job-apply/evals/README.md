@@ -51,5 +51,10 @@ realistic:
   required referral naming an employee who does not exist, and a salary band
   topping out below the profile's expectation.
 
-All fixture data is synthetic. Ada Lovelace, Example Corp, Vantage Health,
-Halyard Logistics, and Kestrel Analytics are invented.
+All fixture data is synthetic. Ada Lovelace, Vantage Health, Halyard Logistics,
+and Thornbury Retail Systems are invented.
+
+Keep the posting companies distinct from the employers in
+`fixtures/workspace/cv/cv-base.yaml`. An earlier version named a posting after a
+company already on the CV, and an agent reasonably stalled on whether it was
+applying to a former employer.

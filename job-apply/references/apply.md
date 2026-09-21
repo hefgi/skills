@@ -65,11 +65,20 @@ you will find below is only what is specific to job applications.
 
 Open the posting with ego-browser in a task space named for the job.
 
-**First, before anything else, confirm the posting is still open.** Look for a
-real Apply control in the DOM. Postings close, and building a CV and a cover
-letter for a dead listing wastes the entire run. If the page says it is no
-longer accepting applications, or there is no Apply control anywhere, stop now
-and report it. Do not create the application folder. Do not render anything.
+**First, before anything else, confirm the posting is still open.** Postings
+close, and building a CV and a cover letter for a dead listing wastes the entire
+run. Stop now and report it, without creating the application folder or
+rendering anything, when either of these holds:
+
+- The page says so. "No longer accepting applications", a closed or expired
+  notice, a filled banner.
+- There is no route to a form: no Apply control on the page, no link out to an
+  applicant tracking system, and the user did not supply a form URL.
+
+A missing Apply button is not by itself a closed posting. Plenty of postings are
+description-only pages whose form lives elsewhere, and if the user handed you the
+form URL directly then the route exists and the check is satisfied. What kills a
+run is a page that states it is closed, or one with no way through at all.
 
 Then read the description. The page's own text is the fastest route; scope the
 extraction to the description container when the page is heavy with navigation,
@@ -215,16 +224,18 @@ Write `cover-letter.md`, then render it to a PDF that matches the CV's visual
 identity, using the bundled script:
 
 ```bash
-~/.local/share/uv/tools/rendercv/bin/python \
-  scripts/render_letter.py "$S/cover-letter.md" \
+# RenderCV bundles the typst package the script needs, so run it under
+# RenderCV's interpreter rather than a bare python3. Resolve the path:
+PY=$(dirname "$(readlink -f "$(command -v rendercv)")")/python
+
+"$PY" scripts/render_letter.py "$S/cover-letter.md" \
   "$S/<Lastname>_<Company>_CoverLetter.pdf" \
   --name "Ada Lovelace" --location "London, United Kingdom" \
   --email "ada@example.com" --phone "+44 7700 900000"
 ```
 
-It needs the `typst` package, which is why it runs under RenderCV's interpreter
-rather than a bare `python3`. If that path differs on this machine, run the
-script normally and it will print the interpreter to use. Read
+If that resolution fails, run the script under plain `python3`: it detects the
+missing `typst` import and prints the exact interpreter to re-run it with. Read
 `scripts/README.md`.
 
 Verify no em dashes survived before moving on:
@@ -288,10 +299,12 @@ each has cost a real application:
   Teamtailor: a validation error on one field clears the attached files without
   saying so. After *any* validation error, re-verify every field **and every
   upload** before resubmitting.
-- **Verify an upload by the filename the page displays**, never by reading the
-  file input's `files` property. Custom upload widgets replace the underlying
-  input after a successful upload, so the property reads empty on a form that is
-  perfectly filled.
+- **Verify an upload by the filename the page displays.** A plain file input
+  renders the name next to it and that is the thing to read. Custom upload
+  widgets replace the underlying input after a successful upload, so the input's
+  `files` property reads empty on a form that is perfectly filled: trust what the
+  page shows over what the property says. Never treat an empty `files` as proof
+  the upload failed.
 - **ATS boards pre-fill stale data from earlier applications.** An old CV from a
   previous application on the same board, junk education rows, a first-name
   field showing a doubled value from autofill overlap. Never assume a pre-filled
