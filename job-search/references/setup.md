@@ -105,8 +105,16 @@ It prints JSON. What each part is for:
 | `titles` | `query_terms_<track>` | Every title applied to, which is broader and more specific than a remembered list. |
 | `titles_not_in_targets` | A question in step 6 | The delta between what they applied to and what `targets.md` claims they want. This is the highest-value output of mining. |
 | `tracks` | The per-track query budget | The fde-to-leadership ratio in the log is how the user actually splits their effort. |
-| `cooldown_candidates` | `company_cooldown` | Mined from the notes column, where per-company application caps were recorded at the time. |
+| `cooldown_candidates` | `company_cooldown`, **only when the cap is reached** | Mined from the notes column, where per-company application caps were recorded at the time. |
 | `retryable` | Mentioned in the report | Applications logged as failed, incomplete, or draft. These are jobs to revisit, not history. |
+
+**A mentioned cap is not a reached cap.** Each `cooldown_candidates` entry
+carries `stated_cap`, `applications_logged`, and `cap_reached`. Write a company
+into `company_cooldown` only when `cap_reached` is true: the key means "applying
+again wastes a slot", and a company that caps at three where the user has sent
+one is a board worth sweeping, not skipping. Adding it anyway silently removes
+one of their most-used boards from every future run. When `cap_reached` is false,
+mention it in the report and leave it out.
 
 The `titles_not_in_targets` delta is worth surfacing explicitly rather than
 silently merging. On a real log it found 47 titles absent from `targets.md`,

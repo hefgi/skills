@@ -11,7 +11,7 @@ job cross-posted to two boards collapse into one row.
 
 - [Phase A: load and reconcile](#phase-a-load-and-reconcile)
 - [Phase B: plan the queries](#phase-b-plan-the-queries)
-- [Phase C: connect to the browser](#phase-c-connect-to-the-browser)
+- [Phase C: open the browser](#phase-c-open-the-browser)
 - [Phase D: sweep each source](#phase-d-sweep-each-source)
 - [Phase E: upsert](#phase-e-upsert)
 - [Phase F: report and finish](#phase-f-report-and-finish)
@@ -120,11 +120,25 @@ modes for each. The loop is the same everywhere:
 5. Append to the in-memory harvest.
 
 **Checkpoint after each source**, so a run that dies at source four keeps the
-first three:
+first three. Write the whole accumulated harvest each time, overwriting:
 
 ```bash
-cat > "$W/search/runs/<run-id>.partial.json"   # the harvest so far
+python3 - "$W/search/runs/<run-id>.partial.json" <<'PY'
+import json, sys
+harvest = [
+  {"company": "Hilbert Systems", "role": "Forward Deployed Engineer",
+   "url": "https://jobs.ashbyhq.com/hilbert/cccc3333", "platform": "ashby",
+   "location": "London, United Kingdom", "work_mode": "hybrid", "source": "ashby"},
+  # ...every row gathered so far, from every source completed
+]
+json.dump(harvest, open(sys.argv[1], "w"), indent=2)
+PY
 ```
+
+The file is the only state that survives between rounds: each `ego-browser`
+invocation is a new process, so nothing in JavaScript persists. Re-serialize the
+full accumulated list rather than appending one source's rows, because a partial
+file that omits earlier sources loses exactly what the checkpoint exists to keep.
 
 Extract the fields listed under [Harvest format](#harvest-format). Anything
 missing beyond those is fine: `pipeline.py` fills sensible defaults, and a
@@ -164,7 +178,8 @@ Delete the `.partial.json` once the upsert succeeds.
 ```bash
 scripts/pipeline.py report --pipeline "$W/search/pipeline.csv" \
   --run-id "<run-id>" \
-  --blocked "linkedin: checkpoint challenge" \
+  --blocked "linkedin: checkpoint challenge at https://www.linkedin.com/checkpoint/challenge/x" \
+  --blocked "ai-boards: YC login wall" \
   --out "$W/search/runs/<run-id>.md"
 ```
 
@@ -201,9 +216,14 @@ hours of their own browsing, not just this run.
   varying one.
 - **Serial, never parallel.** One request at a time in one tab. Parallel loads
   against a single session are the fastest route to a challenge page.
-- **Three strikes per source.** An empty extraction, a challenge, or a timeout
-  is a strike. Three retires that source for the run. This stops a sweep
-  grinding against a board that has already decided to stop answering.
+- **Three strikes per source.** An empty extraction or a timeout is a strike.
+  Three retires that source for the run. This stops a sweep grinding against a
+  board that has already decided to stop answering.
+
+  **A challenge or a login wall is not a strike, it is an immediate stop.**
+  Strikes are for a board that might answer next time. A checkpoint page has
+  already decided, and hitting it twice more is what turns a soft throttle into
+  a long block. See [When a source blocks](#when-a-source-blocks).
 
 ## When a source blocks
 

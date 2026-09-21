@@ -14,6 +14,18 @@ dependencies, so it needs no environment setup.
 scripts/pipeline.py <command> [options]
 ```
 
+`scripts/` in every example below is **relative to this skill's directory, not
+to the workspace**. A sweep runs with the workspace as its working directory, so
+resolve the script's real path once and use it throughout. Locate it from the
+skill rather than hard-coding one, since where skills live differs between
+setups:
+
+```bash
+# You know where you read SKILL.md from. Set this once from that path.
+PIPELINE="<path to this skill>/scripts/pipeline.py"
+"$PIPELINE" list --pipeline "$W/search/pipeline.csv"
+```
+
 ### mine
 
 Summarise `applications/log.csv` so Setup can seed from evidence rather than an
@@ -129,10 +141,14 @@ Render a run report to markdown.
 scripts/pipeline.py report --pipeline "$W/search/pipeline.csv" \
   --run-id 2026-09-21-1 \
   --blocked "linkedin: checkpoint challenge at https://..." \
+  --blocked "ai-boards: YC login wall" \
   --out "$W/search/runs/2026-09-21-1.md"
 ```
 
-`--blocked` is comma-separated and renders a "Sources blocked" section. Use it
+`--blocked` is repeatable, once per blocked source, and renders a "Sources
+blocked" section. It is repeatable rather than comma-separated because a useful
+blocked message names a URL and usually contains a comma, and splitting one
+message into three fragments is worse than typing the flag twice. Use it
 whenever a source could not be swept, because blocked and empty lead to
 completely different actions by the user.
 
