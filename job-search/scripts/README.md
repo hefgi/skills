@@ -43,9 +43,12 @@ scripts/pipeline.py mine --log "$W/applications/log.csv" \
 
 Emits JSON: `applications`, `companies`, `platforms` (ranked, which becomes the
 sweep order), `tracks`, `known_company_boards` (ATS slugs pulled from the URLs),
-`titles`, `company_names`, `cooldown_candidates` (companies whose notes mention
-an application cap), and `retryable` (applications logged as failed, incomplete,
-or draft).
+`titles`, `company_names`, `cooldown_candidates`, and `retryable` (applications
+logged as failed, incomplete, or draft).
+
+Each cooldown candidate carries `stated_cap`, `applications_logged`,
+`cap_reached`, and `rejected_on_cap`. `cap_reached` is `null` when the note
+stated a limit with no number, which is unknown rather than no.
 
 ### init
 

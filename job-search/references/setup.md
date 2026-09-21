@@ -109,12 +109,19 @@ It prints JSON. What each part is for:
 | `retryable` | Mentioned in the report | Applications logged as failed, incomplete, or draft. These are jobs to revisit, not history. |
 
 **A mentioned cap is not a reached cap.** Each `cooldown_candidates` entry
-carries `stated_cap`, `applications_logged`, and `cap_reached`. Write a company
-into `company_cooldown` only when `cap_reached` is true: the key means "applying
-again wastes a slot", and a company that caps at three where the user has sent
-one is a board worth sweeping, not skipping. Adding it anyway silently removes
-one of their most-used boards from every future run. When `cap_reached` is false,
-mention it in the report and leave it out.
+carries `stated_cap`, `applications_logged`, `cap_reached`, and
+`rejected_on_cap`. Write a company into `company_cooldown` when `cap_reached` is
+true, or when `rejected_on_cap` is true, which means an application was actually
+turned away on quota and is the strongest signal there is.
+
+`cap_reached: null` means the note stated a limit without a number, which is
+common in real wording ("we limit the number of applications"). Unknown is not
+the same as no: surface those to the user rather than deciding either way.
+
+When `cap_reached` is false, leave the company out and mention it in the report.
+The key means "applying again wastes a slot", and a company that caps at three
+where the user has sent one is a board worth sweeping, not skipping. Adding it
+anyway silently removes one of their most-used boards from every future run.
 
 The `titles_not_in_targets` delta is worth surfacing explicitly rather than
 silently merging. On a real log it found 47 titles absent from `targets.md`,

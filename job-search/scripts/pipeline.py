@@ -480,7 +480,15 @@ def cmd_mine(args) -> int:
 
         notes = (row.get("notes") or "").lower()
         status = (row.get("status") or "").strip().lower()
-        if re.search(r"\bcap(s|ped)?\b|per \d+ days|quota|limit of \d+", notes):
+        # Require wording that is actually about a limit on applying. Matching a
+        # bare "cap" or "application" pulls in every ordinary submission note and
+        # would cool down boards the user is applying through happily.
+        if re.search(
+            r"caps? applications|capped at|application cap|per-candidate"
+            r"|we limit|limiting applications|limit of \d+|quota"
+            r"|\d+\s+applications?\s+per|per \d+ days",
+            notes,
+        ):
             # One entry per company: the same cap mentioned on five applications
             # is still one company to avoid, and a repeated list is noise a user
             # then has to hand-deduplicate.
@@ -508,8 +516,17 @@ def cmd_mine(args) -> int:
         entry["applications_logged"] = per_company[entry["company_key"]]
         cap = entry.get("stated_cap")
         # Advisory only. The user decides; mining just stops them guessing.
+        # An unparseable cap is unknown, not satisfied. Real notes often state
+        # the limit in prose with no number ("we limit the number of
+        # applications"), and treating that as "not reached" would quietly keep
+        # sweeping a board that has already rejected an application on quota.
+        # None means the user decides; it never silently means no.
         entry["cap_reached"] = (
             None if cap is None else entry["applications_logged"] >= cap
+        )
+        entry["rejected_on_cap"] = bool(
+            re.search(r"rejected[^.]*cap|couldn.?t submit|could not submit",
+                      (entry["evidence"] or "").lower())
         )
 
     summary = {
