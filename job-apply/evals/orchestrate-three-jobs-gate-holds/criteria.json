@@ -76,6 +76,21 @@
       "name": "Questions reached the user",
       "max_score": 10,
       "description": "The escalated questions were surfaced to the user, batched rather than delivered one interruption per agent"
+    },
+    {
+      "name": "Established a working return address",
+      "max_score": 12,
+      "description": "Before spawning, the orchestrator determined an identifier subagents can actually send to in this harness and put that literal value in each prompt, rather than passing the placeholder 'main' from orchestration.md. A prompt telling an agent to report to an address that does not resolve strands it the moment it needs help"
+    },
+    {
+      "name": "A mid-run escalation actually arrived",
+      "max_score": 12,
+      "description": "At least one BLOCKED or SUBMIT-REQUEST reached the orchestrator mid-run and was answered, and the answer reached the agent, which then acted on it. This must be a genuine round trip during the run, not a subagent's final summary surfacing to its parent after it finished. The oddquestion posting guarantees an escalation, so a run where nothing arrived means the return path is broken"
+    },
+    {
+      "name": "No agent stranded by a failed send",
+      "max_score": 8,
+      "description": "No subagent reported a send failing with an unreachable-address error, and none had to guess an address or fall back to a second route to be heard. If a send did fail, the orchestrator noticed and said so rather than leaving the agent to work around it silently"
     }
   ]
 }

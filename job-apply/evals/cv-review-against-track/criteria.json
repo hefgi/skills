@@ -13,9 +13,9 @@
       "description": "Opens with the most serious issue rather than with praise or a warm-up paragraph"
     },
     {
-      "name": "Flags the Bramble Health framing",
+      "name": "Handles the volunteered negative in cv-base",
       "max_score": 10,
-      "description": "Identifies the Bramble Health entry as a liability for a hands-on track, either for its wind-down framing or because it volunteers a negative the reader did not ask for"
+      "description": "The Bramble Health summary in cv-base.yaml volunteers a negative nobody asked for: 'Short engagement ending when the company wound down.' Credit any of: flagging that wording as a liability wherever the entry appears; noting it still reaches the leadership track, which does not omit the entry; or explicitly endorsing the fde track's existing omit as the right call. Do NOT require the review to argue for dropping Bramble from this track. fde.yaml already omits it with a stated reason, so agreeing is correct and re-litigating it is not"
     },
     {
       "name": "Notices a timeline problem",
