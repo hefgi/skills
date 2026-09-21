@@ -8,6 +8,19 @@ You are the **orchestrator**, called `main` throughout this file. You do not
 drive a browser. You spawn agents, answer their questions, approve their
 submissions, and own the log.
 
+`main` is what this file calls you, not necessarily an address that resolves.
+Before spawning anything, work out how an agent can actually reach you in this
+harness and put that literal identifier in every prompt. A subagent that blocks
+mid-run and sends to a name that does not resolve is stranded: it gets an error
+with nowhere to go, and you learn nothing until it gives up. Do not assume the
+string `main` works, and do not let an agent guess from the sender label on
+messages it receives, which is typically an agent type rather than an address.
+
+If you cannot establish a reachable address, say so and run the postings
+yourself in sequence. Fan-out without a return path is worse than serial work,
+because an agent that needs you has no way to ask and will either stall or
+decide alone.
+
 Read this file only as the orchestrator. Subagents read `apply.md` and the
 `ego-browser` skill. **Never give a subagent this file**: an agent that reads
 "spawn one agent per posting" will fan out again.
@@ -23,7 +36,10 @@ wall-clock is roughly the slowest single application rather than the sum.
 
 **Stay serial when:**
 
-- There are only one or two postings. Two sequential applications usually finish
+- Only one or two postings survive triage. Count what is left after you have
+  dropped duplicates and anything you can see is closed, not what the user
+  handed you: three URLs where one is dead is a two-posting run. Two sequential
+  applications usually finish
   before two spawned agents have finished reading the profile.
 - Ego lite is not verified working yet. Debug it once yourself rather than
   watching five agents fail the same way.
@@ -134,9 +150,10 @@ YOUR JOB:
 Name your ego-browser task space "<company>-<role-slug>" and print its numeric
 spaceId in every message to me.
 
-Report to me with SendMessage(to="main"). I am your only route to the user.
-Always send to "main", including when replying. The sender label on messages
-you receive is not a valid address and sending to it fails.
+Report to me with SendMessage(to="<your resolvable identifier>"). Substitute the
+real one; do not leave a placeholder. I am your only route to the user.
+Use that same address every time, including when replying. The sender label on
+messages you receive is not an address and sending to it fails.
 ```
 
 Add anything posting-specific you know: a quirk of that ATS, a framing the user
@@ -162,6 +179,11 @@ whether *you* approve on the user's behalf or take it to them:
   against `profile/` and `qa/`. The user stays hands-off.
 - **`auto_submit: false`** — you batch the pending requests and put them to the
   user in one `AskUserQuestion`, rather than interrupting them once per agent.
+  When the user is not there to answer, take the same route `apply.md` Phase E
+  takes when working alone: log each one `awaiting_review` and stop. The work is
+  finished and correct, only the click is outstanding. Do not log it
+  `incomplete`, which means something could not be filled, and do not approve it
+  yourself to clear the queue.
 
 The gate is worth its cost. Across one real run of nine agents it caught: a
 posting that turned out to be a different company with no application form at

@@ -80,6 +80,12 @@ description-only pages whose form lives elsewhere, and if the user handed you th
 form URL directly then the route exists and the check is satisfied. What kills a
 run is a page that states it is closed, or one with no way through at all.
 
+**A form you discovered is not a route the posting offered.** Guessing an apply
+URL, or finding one by browsing a directory listing or a sitemap the posting
+never links to, is not the same as the employer pointing you there. An unlinked
+form is as likely to be a draft, a stale artifact, or a different role's form as
+it is the one intended for you. Say what you found and ask before using it.
+
 Then read the description. The page's own text is the fastest route; scope the
 extraction to the description container when the page is heavy with navigation,
 "people also viewed" panels, and footers.
@@ -274,8 +280,11 @@ move on.
 - **No confident match.** The question is not in the bank and is not derivable.
 - **Low-confidence match.** A stored answer is related but not equivalent.
 
-Batch pending questions with `AskUserQuestion` rather than interrupting per
-field, so the user answers once. Fill everything resolvable first, then ask.
+Fill everything resolvable first, then ask, so the user answers once rather than
+per field. Working alone, batch the questions with `AskUserQuestion`. As a
+subagent you have no route to the user and must not call it: carry the questions
+in the `unanswered` field of your `SUBMIT-REQUEST`, or send `BLOCKED` if one of
+them stops you filling the rest.
 
 When genuinely torn between high and low confidence, treat it as low. Asking is
 cheap. A wrong answer submitted to an employer cannot be corrected.

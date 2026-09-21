@@ -130,7 +130,11 @@ address_line_1: 12 Example Street
 
 These exist because the same judgement recurs on every form, and recording it
 once is what stops the skill asking a second time. They apply anywhere in
-`profile/`. Write one whenever the user answers with a rule rather than a value.
+`profile/`, and in `.job-apply/config.yaml`. Write one whenever the user answers
+with a rule rather than a value.
+
+A trailing comment on the same line as a key binds the same way, so
+`auto_submit: false  # never submit without me` is an instruction, not a note.
 
 ## profile/logistics.md
 
