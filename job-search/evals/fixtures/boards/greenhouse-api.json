@@ -1,0 +1,14 @@
+{
+  "_comment": "Stand-in for boards-api.greenhouse.io/v1/boards/<slug>/jobs?content=true. The real API is the preferred Greenhouse path because it needs no DOM parsing, so the fixture mirrors its field names exactly.",
+  "jobs": [
+    {"id": 9001, "title": "Head of Engineering", "absolute_url": "https://job-boards.greenhouse.io/euler/9001",
+     "location": {"name": "Dublin, Ireland"}, "updated_at": "2026-09-18T10:00:00Z"},
+    {"id": 9002, "title": "Forward Deployed Engineer, Enterprise", "absolute_url": "https://job-boards.greenhouse.io/euler/9002",
+     "location": {"name": "London, UK"}, "updated_at": "2026-09-19T10:00:00Z"},
+    {"id": 9003, "title": "Software Engineer II", "absolute_url": "https://job-boards.greenhouse.io/euler/9003",
+     "location": {"name": "London, UK"}, "updated_at": "2026-09-19T11:00:00Z"},
+    {"id": 9004, "title": "Director of Engineering", "absolute_url": "https://job-boards.greenhouse.io/euler/9004",
+     "location": {"name": "Remote - European Union"}, "updated_at": "2026-09-20T09:00:00Z"}
+  ],
+  "meta": {"total": 4}
+}

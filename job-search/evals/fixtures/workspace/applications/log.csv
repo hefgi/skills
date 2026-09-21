@@ -1,0 +1,13 @@
+date,company,role,url,platform,track,status,cv_file,cover_letter_file,session_id,questions_asked,notes
+2026-08-04,Babbage Systems,Forward Deployed Engineer,https://jobs.ashbyhq.com/babbage/11111111-1111-1111-1111-111111111111,ashby,fde,applied,,,s1,1,
+2026-08-05,Lovelace Analytics,Deployed Engineer (UK),https://jobs.ashbyhq.com/lovelace/22222222-2222-2222-2222-222222222222,ashby,fde,applied,,,s1,0,
+2026-08-06,Turing Labs,Member of Technical Staff,https://jobs.ashbyhq.com/turinglabs/33333333-3333-3333-3333-333333333333,ashby,fde,applied,,,s1,2,Caps applications at 2 per 30 days.
+2026-08-07,Hopper Compute,Applied AI Engineer,https://job-boards.greenhouse.io/hopper/4001,greenhouse,fde,applied,,,s1,1,
+2026-08-08,Hamilton Data,Agent Deployment Engineer,https://jobs.ashbyhq.com/hamilton/44444444-4444-4444-4444-444444444444,ashby,fde,failed,,,s1,0,Posting closed before submission.
+2026-08-10,Noether Systems,Solutions Architect,https://job-boards.eu.greenhouse.io/noether/5002,greenhouse,fde,applied,,,s1,1,
+2026-08-11,Kepler Robotics,VP of Engineering,https://jobs.ashbyhq.com/kepler/55555555-5555-5555-5555-555555555555,ashby,leadership,applied,,,s1,3,
+2026-08-12,Curie Health,Head of Engineering,https://jobs.lever.co/curie/6003,lever,leadership,applied,,,s1,1,
+2026-08-14,Franklin AI,"Product Engineer, Platform",https://jobs.ashbyhq.com/franklin/66666666-6666-6666-6666-666666666666,ashby,fde,applied,,,s1,0,"Role title includes a comma, deliberately."
+2026-08-15,Shannon Networks,Deployed AI Engineer,https://www.linkedin.com/jobs/view/7004/,linkedin-easyapply,fde,incomplete,,,s1,2,Form stalled on a required field.
+2026-08-18,Bernoulli Trading,Engineering Director,https://boards.greenhouse.io/bernoulli/7005,greenhouse,leadership,applied,,,s1,1,
+2026-08-20,Babbage Systems,Solutions Engineer,https://jobs.ashbyhq.com/babbage/77777777-7777-7777-7777-777777777777,ashby,fde,applied,,,s1,0,Limit of 3 applications per candidate.

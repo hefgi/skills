@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether setup derives the search criteria from an existing job-apply workspace rather than interviewing the user. The application log already encodes which platforms they use, the titles they apply under, and which companies cap applications, so re-asking is the failure. Inferences must be shown for confirmation rather than written silently, and the existing profile must not be rewritten.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Reused the existing workspace",
+      "max_score": 12,
+      "description": "Resolved the workspace via the .job-apply/config.yaml marker and did not create a second workspace or a second marker file"
+    },
+    {
+      "name": "Created profile/search.md",
+      "max_score": 8,
+      "description": "profile/search.md exists after the run"
+    },
+    {
+      "name": "Created the pipeline with the right header",
+      "max_score": 10,
+      "description": "search/pipeline.csv exists and its header is exactly the 16 documented columns, in the documented order"
+    },
+    {
+      "name": "Mined ATS slugs from the log",
+      "max_score": 12,
+      "description": "known_company_boards contains at least four ATS slugs extracted from the URLs in applications/log.csv, in the host:slug form, rather than asked for or invented"
+    },
+    {
+      "name": "Ordered sources by observed use",
+      "max_score": 8,
+      "description": "The sources order reflects the platform counts mined from the log, most-used first, rather than an arbitrary or alphabetical order"
+    },
+    {
+      "name": "Query terms include the recorded targets",
+      "max_score": 8,
+      "description": "query_terms_fde includes titles taken from profile/targets.md"
+    },
+    {
+      "name": "Surfaced titles found only in the log",
+      "max_score": 10,
+      "description": "Surfaced at least one title that appears in the application log but not in profile/targets.md, and asked whether to adopt it rather than adopting it silently"
+    },
+    {
+      "name": "Mined the application caps",
+      "max_score": 8,
+      "description": "company_cooldown includes at least one company whose notes in the log mention an application cap or quota"
+    },
+    {
+      "name": "Derived geography and showed the derivation",
+      "max_score": 10,
+      "description": "geography and exclude_locations were derived from profile/logistics.md, and the derivation was shown to the user for confirmation rather than written silently"
+    },
+    {
+      "name": "Did not interview at length",
+      "max_score": 12,
+      "description": "Asked four or fewer questions, batched into a single interaction. In particular did not re-ask which target roles the user wants, since targets.md already records them"
+    },
+    {
+      "name": "Left the existing profile untouched",
+      "max_score": 10,
+      "description": "profile/targets.md and profile/logistics.md are byte-identical to the fixture after the run, and nothing was written to applications/ or cv/"
+    },
+    {
+      "name": "Reported what it did",
+      "max_score": 6,
+      "description": "Reported where the files were created and what was mined from the log"
+    }
+  ]
+}

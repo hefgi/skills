@@ -1,0 +1,4 @@
+job_key,first_seen,last_seen,company,role,url,platform,location,work_mode,track,source,status,applied_date,run_id,drop_reason,notes
+pascal-compute__solution-engineer,2026-09-01,2026-09-01,Pascal Compute,Solutions Engineer,https://jobs.ashbyhq.com/pascal/aaaa1111-1111-1111-1111-111111111111,ashby,"London, UK",hybrid,fde,ashby,skipped,,2026-09-01-1,,"Looked at it, stack is not a fit."
+gauss-systems__forward-deployed-engineer,2026-08-25,2026-09-01,Gauss Systems,Forward Deployed Engineer,https://jobs.ashbyhq.com/gauss/bbbb2222-2222-2222-2222-222222222222,ashby,"London, UK",remote,fde,ashby,expired,,2026-09-01-1,,
+euler-dynamics__head-of-engineering,2026-09-01,2026-09-01,Euler Dynamics,Head of Engineering,https://job-boards.greenhouse.io/euler/9001,greenhouse,"Dublin, Ireland",hybrid,leadership,greenhouse,new,,2026-09-01-1,,
