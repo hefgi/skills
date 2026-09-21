@@ -1,0 +1,255 @@
+# Workflow 2: Sweep
+
+Find live postings and merge them into the pipeline. Produces new rows in
+`search/pipeline.csv` and a report in `search/runs/`.
+
+The phases run in order. Reconciling before sweeping is what stops the run
+offering jobs already applied to, and buffering until the end is what lets one
+job cross-posted to two boards collapse into one row.
+
+## Contents
+
+- [Phase A: load and reconcile](#phase-a-load-and-reconcile)
+- [Phase B: plan the queries](#phase-b-plan-the-queries)
+- [Phase C: connect to the browser](#phase-c-connect-to-the-browser)
+- [Phase D: sweep each source](#phase-d-sweep-each-source)
+- [Phase E: upsert](#phase-e-upsert)
+- [Phase F: report and finish](#phase-f-report-and-finish)
+- [Pacing](#pacing)
+- [When a source blocks](#when-a-source-blocks)
+- [Harvest format](#harvest-format)
+
+## Phase A: load and reconcile
+
+Read `profile/search.md`, `profile/targets.md`, `profile/logistics.md`, and
+`.job-apply/config.yaml`. If `search.md` is missing or empty, run Setup first.
+
+Then reconcile, before anything else:
+
+```bash
+scripts/pipeline.py reconcile --pipeline "$W/search/pipeline.csv" \
+                              --log "$W/applications/log.csv"
+```
+
+This pulls anything applied to since the last sweep into the pipeline as
+`applied`. Running it first is what guarantees a job is never offered twice: by
+the time new rows are evaluated, everything already submitted is marked.
+
+Pick a run id: `<ISO date>-<n>`, incrementing `n` if a sweep already ran today.
+
+## Phase B: plan the queries
+
+Build the query list before opening a browser, so the browser time is spent
+fetching rather than deciding.
+
+- **Terms**: `query_terms_<track>` from `search.md`, one query per term per
+  source that supports search. Weight the tracks by their ratio in the
+  application log, since that is how the user splits their real effort.
+- **Locations**: from `geography`.
+- **Sources**: `sources:` order from `search.md`, minus `sources_disabled`.
+  The order matters because a run that gets cut short should already have swept
+  the most productive board.
+- **Recency**: bound it. A weekly sweep that does not filter by date re-reads
+  the same postings every time and finds nothing new for the cost of everything.
+
+Tell the user the plan in one line before starting: how many queries, which
+sources, and roughly how long. A sweep is slow by design, and a user who knows
+that will not interrupt it at source three.
+
+## Phase C: open the browser
+
+**Check ego lite is ready before the first browser call**, not after. Phases A
+and B have already read the workspace and planned the queries by this point, and
+discovering here that the browser is missing wastes that and strands the user
+mid-sweep:
+
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+ego-browser nodejs -e 'console.log("READY")'
+```
+
+Anything other than `READY` means stop and work through
+`SKILL.md`'s [Setting up ego lite](../SKILL.md#setting-up-ego-lite), which covers
+the skill being absent, the binary not being on the PATH, and what each failure
+actually means. Install is a one-time setup with a GUI step only the user can
+do, so it is a conversation, not a retry.
+
+**Read the `ego-browser` skill before the first browser call.** It is the
+browser manual: task spaces, snapshots, refs, actions, waiting, and its own
+escalation ladder for a stuck page. This skill does not restate any of it. What
+follows is only what is specific to sweeping job boards.
+
+Open one task space for the whole sweep, named for the run:
+
+```bash
+ego-browser nodejs -e '
+const task = await taskSpace("job search sweep 2026-09-21-1");
+const page = task.page("p1");
+await page.goto("https://jobs.ashbyhq.com/example");
+console.log({ spaceId: task.spaceId });
+console.log(await page.snapshot());
+'
+```
+
+Print the `spaceId` and reuse it for every later round. One space for the whole
+sweep, not one per source: a sweep is a single user goal, and a fresh space per
+board loses the accumulated session state and costs a startup each time.
+
+Navigate the same page between sources with `goto()` rather than opening a page
+per board. A sweep visits dozens of URLs, and a page each would exhaust the page
+budget long before the run finished.
+
+The user's logged-in sessions are what make gated boards readable. They come
+from the Chrome import during ego lite onboarding. **Probe rather than assume**:
+if LinkedIn or Y Combinator shows a login wall, that source is blocked for this
+run. Report it, do not try to work around it.
+
+**Do not run a sweep while an application is in progress.** `job-apply` drives
+its own task space, and a sweep is a long sequence of navigations. Finish or
+abandon one before starting the other, or the two compete for the same browser.
+
+## Phase D: sweep each source
+
+`references/sources.md` has the URL patterns, extraction selectors, and failure
+modes for each. The loop is the same everywhere:
+
+1. Build the URL from the plan.
+2. `goto`, then extract the result list.
+3. Normalize each result into a harvest row.
+4. Paginate up to `max_pages_per_query`.
+5. Append to the in-memory harvest.
+
+**Checkpoint after each source**, so a run that dies at source four keeps the
+first three:
+
+```bash
+cat > "$W/search/runs/<run-id>.partial.json"   # the harvest so far
+```
+
+Extract the fields listed under [Harvest format](#harvest-format). Anything
+missing beyond those is fine: `pipeline.py` fills sensible defaults, and a
+results page genuinely does not carry a full posting body. Do not open every
+posting to enrich a row. That multiplies the request count by twenty for detail
+that `job-apply` will read properly at application time anyway.
+
+**Do not filter while sweeping.** Collect everything with title similarity and
+let `upsert` apply the blockers. One place deciding what gets dropped is what
+makes the run report's counts true.
+
+## Phase E: upsert
+
+Once every source has been swept or retired, merge the whole run at once:
+
+```bash
+scripts/pipeline.py upsert \
+  --pipeline "$W/search/pipeline.csv" \
+  --log      "$W/applications/log.csv" \
+  --criteria "$W/profile/search.md" \
+  --run-id   "<run-id>" \
+  --max-new  60 \
+  < "$W/search/runs/<run-id>.partial.json"
+```
+
+It dedups on all three axes, applies the blockers, infers the track, and prints a
+JSON summary. Read the summary: `ambiguous_track` lists rows it refused to guess
+on, and `over_cap` says how many were left out by `--max-new`.
+
+If `over_cap` is non-zero, say so in the report. A cap that silently discards
+findings makes the next sweep look like it found nothing new.
+
+Delete the `.partial.json` once the upsert succeeds.
+
+## Phase F: report and finish
+
+```bash
+scripts/pipeline.py report --pipeline "$W/search/pipeline.csv" \
+  --run-id "<run-id>" \
+  --blocked "linkedin: checkpoint challenge" \
+  --out "$W/search/runs/<run-id>.md"
+```
+
+**Finish the task space with `task.finish({ keep: [] })` once the sweep is
+genuinely done**, and only then. A sweep visits pages rather than producing
+anything in the browser, so there is normally nothing worth keeping open.
+
+Leave it open when something is outstanding: a source part-swept, a login the
+user is about to complete, or a board you want them to look at themselves. It
+still holds the pages, and closing it to tidy up throws away the state the next
+round needs.
+
+Then tell the user, in a few lines: how many new rows, the drop counts by
+reason, which sources were blocked, and how to apply to what was found. Point at
+`references/handoff.md` for the last part.
+
+Report blocked sources even when the run went well otherwise. That is the piece
+the user needs to act on themselves.
+
+## Pacing
+
+These are the user's real accounts. A throttled LinkedIn session costs them
+hours of their own browsing, not just this run.
+
+| Source | Budget per run |
+|---|---|
+| Ashby, Greenhouse | Unbounded via their JSON APIs. These are public endpoints with no anti-bot, and the user's own boards. |
+| LinkedIn | 6 queries, 3 pages each, 25 results per page |
+| YC, Wellfound | 2 queries and 1 query respectively, best effort |
+| Google | 3 queries, and only for discovering board slugs |
+
+- **Delay 3 to 6 seconds between LinkedIn page loads**, randomized. A fixed
+  cadence is itself a bot signal, so an exact 5-second gap is worse than a
+  varying one.
+- **Serial, never parallel.** One request at a time in one tab. Parallel loads
+  against a single session are the fastest route to a challenge page.
+- **Three strikes per source.** An empty extraction, a challenge, or a timeout
+  is a strike. Three retires that source for the run. This stops a sweep
+  grinding against a board that has already decided to stop answering.
+
+## When a source blocks
+
+A login wall, a CAPTCHA, a consent interstitial, or a challenge page.
+
+**Stop that source immediately.** Do not retry in a loop, do not try to solve it,
+and do not fall back to fetching the same page unauthenticated. Repeated hits on
+a session that has just been challenged is what turns a soft throttle into a
+long block.
+
+Then: continue with the remaining sources, record the blocking URL, and put it in
+the report's blocked section. The user can open that URL in their own browser,
+clear the challenge in five seconds, and the next sweep works.
+
+**Report blocked separately from empty.** "LinkedIn: 0 results" and "LinkedIn:
+blocked at a checkpoint" lead to completely different actions, and collapsing
+them tells the user a board is dry when it is merely guarded.
+
+If the user takes control of the browser, or the task space becomes inactive or
+unassigned, stop. Do not retry or route around it. Keep the partial, say which
+sources were completed, and pick the sweep up in the same space afterwards.
+
+## Harvest format
+
+The JSON array fed to `upsert`. One object per posting:
+
+```json
+[
+  {
+    "company": "Cohere",
+    "role": "Forward Deployed Engineer, Agentic Platform",
+    "url": "https://jobs.ashbyhq.com/cohere/2d256112",
+    "platform": "ashby",
+    "location": "London, UK",
+    "work_mode": "hybrid",
+    "source": "ashby",
+    "notes": ""
+  }
+]
+```
+
+`company`, `role`, and `url` are required, and `upsert` exits non-zero if any is
+missing rather than writing a row that cannot be identified or acted on.
+`work_mode` is `remote`, `hybrid`, `onsite`, or `unknown`; `unknown` is honest
+and common from a results page. Leave `track` out: it is inferred.
+
+Put anything the listing said about work authorization into `notes`. That is
+where the `us-work-auth` blocker looks, and a results page occasionally says
+"US-based only" right in the card.
