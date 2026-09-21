@@ -89,14 +89,36 @@ When a slug 404s, fall back to the board page. It renders client-side, so wait
 for the list before extracting. Posting links match `/<slug>/<uuid>`:
 
 ```js
-await page.goto("https://jobs.ashbyhq.com/<slug>");
-await page.waitForSelector('loc=css:a[href*="/"]', { state: "visible" });
-const jobs = await page.evaluate(() =>
+await page.goto(`https://jobs.ashbyhq.com/${slug}`);
+// Wait on the list container, not on the postings. `waitForSelector` resolves a
+// single element, so a selector matching every posting link raises
+// ElementResolutionError rather than waiting. Count matches instead when there
+// is no container to key on.
+await page.waitForFunction(
+  () => document.querySelectorAll('a[href*="/"]').length > 1,
+  undefined,
+  { timeout: 15000 },
+);
+const jobs = await page.evaluate((slug) =>
   [...document.querySelectorAll("a[href]")]
     .filter((a) => /^\/[^/]+\/[0-9a-f-]{36}/.test(a.getAttribute("href") || ""))
-    .map((a) => ({ role: a.innerText.trim(), url: a.href })),
+    .map((a) => ({ role: a.innerText.trim(), url: a.href, slug })),
+  slug,
 );
 ```
+
+**The company name is not on the board page.** Ashby renders the role, the
+location, and the work mode, and leaves the employer implicit. `upsert` refuses a
+row without a company, so take it from the slug you are sweeping rather than the
+page: you queried one board, so every posting on it belongs to that company.
+
+Resolve the slug to a display name in this order, because `job_key` is derived
+from it and an inconsistent name splits one company into two:
+
+1. The name already used for that slug in `applications/log.csv` or
+   `pipeline.csv`. Existing rows are the authority.
+2. The board's own title or heading, when it names the employer.
+3. Title-cased slug as a last resort, and say in the report that you guessed.
 
 ### Failure modes
 
@@ -171,20 +193,35 @@ returns the whole list:
 
 ```js
 await page.goto(url);
-await page.waitForSelector("loc=css:[data-job-id]", { state: "visible" });
+await page.waitForFunction(
+  () => document.querySelectorAll("[data-job-id]").length > 0,
+  undefined,
+  { timeout: 15000 },
+);
 const cards = await page.evaluate(() =>
-  [...document.querySelectorAll(
-    "div.job-card-container, li.jobs-search-results__list-item, [data-job-id]",
-  )].map((c) => ({
-    id: c.getAttribute("data-job-id"),
-    text: c.innerText,
-  })).filter((c) => c.id),
+  [...document.querySelectorAll("[data-job-id]")].map((el) => {
+    // Climb to the list item. The metadata lines that carry location and any
+    // work-authorization notice are siblings of the card, not inside it, so
+    // reading the card alone silently loses them.
+    const item = el.closest("li") || el.parentElement || el;
+    return { id: el.getAttribute("data-job-id"), text: item.innerText };
+  }).filter((c) => c.id),
 );
 ```
 
-The card text carries the company and location on separate lines; parse them out
-in Node rather than in the page, so a layout change shows up as a parse you can
-see rather than an empty array.
+**Extract from the list item, not the card.** The `[data-job-id]` element holds
+the role and the company; the location and any "must be authorized to work in
+the United States" line often sit outside it. A card-only read returns rows that
+look complete and are missing exactly the text the `us-work-auth` blocker tests,
+so a US-only posting sails through as a normal row.
+
+That gives the failure a visible signature: **a card with no location line means
+the extraction missed it, not that the posting has no location.** Treat a batch
+where every row lacks a location as a broken selector rather than as data.
+
+Parse the company and location out of the text in Node rather than in the page,
+so a layout change surfaces as a parse you can inspect rather than an empty
+array.
 
 **Build the URL from `data-job-id`**, as
 `https://www.linkedin.com/jobs/view/<id>/`, rather than reading the anchor. The
