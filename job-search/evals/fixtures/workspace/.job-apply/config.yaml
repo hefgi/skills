@@ -7,3 +7,5 @@ default_track: fde
 search:
   max_new_rows_per_run: 60
   default_track:
+  max_concurrent_sweeps: 6
+  max_concurrent_browser: 3

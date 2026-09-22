@@ -673,6 +673,16 @@ def cmd_upsert(args) -> int:
     criteria = parse_criteria(Path(args.criteria)) if args.criteria else {}
     today = args.today or date.today().isoformat()
 
+    # The cap is documented in profile/search.md, so read it from there when the
+    # flag is absent. A config value the tool ignores unless the operator
+    # retypes it is a trap: the file keeps claiming 60 while the run used
+    # something else, and nothing shows the disagreement.
+    max_new = args.max_new
+    cap_source = "--max-new"
+    if not max_new and criteria.get("max_new_rows_per_run", "").strip().isdigit():
+        max_new = int(criteria["max_new_rows_per_run"])
+        cap_source = "profile/search.md"
+
     existing = read_csv(pipeline_path)
     by_key = {r["job_key"]: r for r in existing if r.get("job_key")}
 
@@ -781,7 +791,7 @@ def cmd_upsert(args) -> int:
             else:
                 stats["seen_again"] += 1
             continue
-        if args.max_new and added >= args.max_new:
+        if max_new and added >= max_new:
             stats["over_cap"] += 1
             continue
         by_key[key] = row
@@ -802,6 +812,8 @@ def cmd_upsert(args) -> int:
         "retryable": stats["retryable"],
         "cross_post_merged": stats["cross_post_merged"],
         "over_cap": stats["over_cap"],
+        "max_new": max_new or None,
+        "max_new_from": cap_source if max_new else None,
         "dropped": {k.removeprefix("dropped_"): v
                     for k, v in stats.items() if k.startswith("dropped_")},
         "ambiguous_track": ambiguous,

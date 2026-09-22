@@ -83,6 +83,11 @@ scripts/pipeline.py init --pipeline "$W/search/pipeline.csv"
 Then write `profile/search.md` with every key present and empty, from the
 template in `references/data-schema.md`. Fill it as the following steps resolve.
 
+**Add the `search:` block to `.job-apply/config.yaml` if it is missing**, with
+the keys and defaults from `data-schema.md`. `references/orchestration.md` reads
+`max_concurrent_sweeps` and `max_concurrent_browser` from there, and a key that
+is only ever documented is one an operator looks up and does not find.
+
 Creating the skeleton before the questions is what makes step 2's check
 meaningful and an interrupted setup resumable. A file with empty keys says "this
 was considered and not yet answered". A file that does not exist says nothing,

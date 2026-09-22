@@ -181,9 +181,12 @@ profile/search.md holds decisions already made. A `#` comment above a key is
 binding: follow it, do not re-derive it, do not ask about it.
 
 ## How to reach me
-Send with SendMessage(to="<address>"), exactly as written. This is a real
-address, established from the messaging tool's contract and confirmed working,
-not a placeholder to substitute. Use it for every message including replies.
+Send with SendMessage(to="main"), exactly as written.
+
+`main` is a real address, established from the messaging tool's contract and
+confirmed working. It is NOT a placeholder: do not substitute anything for it.
+(Replace this whole line with your actual address before writing the brief if
+`main` is not what resolves in your harness, and say the same thing about it.) Use it for every message including replies.
 Never send to the sender label on a message you receive: that is an agent type
 and will not resolve.
 
@@ -301,9 +304,9 @@ The run-level `--max-new` cap would also be applied N times.
 
 ```bash
 "$PIPELINE" merge \
-  --shard "$W/search/runs/<run-id>.ashby.json" \
-  --shard "$W/search/runs/<run-id>.linkedin.json" \
-  --shard "$W/search/runs/<run-id>.greenhouse.json" \
+  --shard "$W/search/runs/<run-id>.ashby.partial.json" \
+  --shard "$W/search/runs/<run-id>.linkedin.partial.json" \
+  --shard "$W/search/runs/<run-id>.greenhouse.partial.json" \
   --out   "$W/search/runs/<run-id>.merged.json"
 
 "$PIPELINE" upsert \
@@ -314,6 +317,14 @@ The run-level `--max-new` cap would also be applied N times.
   --max-new  60 \
   < "$W/search/runs/<run-id>.merged.json"
 ```
+
+**Keep the shards after a successful upsert; delete only the merged file.**
+`search.md` Phase E says to delete the scratch `.partial.json`, which is right
+for a serial run where that file is a resumption checkpoint and nothing else.
+Under fan-out the shards are the only record of which agent found what, and the
+report is generated from the pipeline rather than from them, so deleting them
+throws away the audit trail. If you do delete them, carry the per-agent counts
+into the report first.
 
 `merge` also collects every shard's `blocked` and `slugs` lists, deduplicated,
 and flags empty shards. Read that summary: an empty shard you were not expecting
