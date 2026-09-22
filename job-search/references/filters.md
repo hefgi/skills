@@ -128,11 +128,63 @@ preference never drops a job.
 |---|---|
 | `junior-ic` | Title matches intern, graduate, apprentice, placement, trainee, working student; or seniority is junior or associate; or the level is I or II with no senior, staff, principal, or lead marker alongside it |
 | `us-work-auth` | The posting demands US citizenship, a green card, existing US work authorization, or a security clearance |
-| `location` | The location matches `exclude_locations`, **unless** the role is remote. The exclusion is about where the user must physically be, not where the company is incorporated. |
+| `location` | Every location on the posting matches `exclude_locations` or names a subdivision of one, **unless** the role is *unqualified* remote. `Remote - Texas` is dropped; `Remote`, `Remote - EMEA` and `Remote - Global` are kept. |
+| `function-excluded` | The role title matches `query_terms_exclude`: a job in a different profession. |
 | `onsite-elsewhere` | Work mode is onsite and the location is not `onsite_requires_city` |
 | `cooldown` | The company is in `company_cooldown` and any `until` date has not passed |
 | `company-excluded` | The company is in `companies_never` |
 | `industry` | The posting matches `industries_avoid` |
+
+### Qualified remote is not remote
+
+`Remote - Texas` is a location requirement wearing the word remote. You must be
+in Texas; there simply is no office. Only **unqualified** remote is genuinely
+location-independent.
+
+This matters more than it sounds, because large US employers write their whole
+board that way. A real sweep put 31 unreachable rows in front of the user, 26 of
+them one company's US state postings, and every one contained the word remote.
+
+Two consequences for anything testing a location:
+
+- **Test qualified remote before the bare word**, since every qualified string
+  contains it. A check that looks for `remote` first can never reach the
+  qualified case.
+- **`work_mode: remote` does not exempt a row.** "A remote role at a US company"
+  and "a role requiring you to be in the US" are different things, and the field
+  does not distinguish them. `Remote U.S.` is the second.
+
+`exclude_locations` names countries, but boards name states and provinces, so
+the blocker also matches subdivisions. Those live in `pipeline.py` next to the
+other domain knowledge rather than in `search.md`: nobody should have to
+enumerate fifty states by hand.
+
+A posting listing several locations is kept when **any** of them is reachable,
+so `Doha, Qatar; London, UK` stays. Fragments that are a hiring policy rather
+than a place, such as `Remote-Friendly (Travel-Required)`, are not counted as a
+reachable location, or a posting whose real offices are all excluded would be
+rescued by its own policy text.
+
+An absent location is unknown, not excluded. A results page often omits it, and
+a false keep costs one glance while a false drop costs a job.
+
+### Excluding a whole profession
+
+`query_terms_exclude` drops roles in a different line of work: account
+management, sales leadership, marketing, recruiting, non-software engineering.
+
+Match on word boundaries, never substrings, and prefer multi-word phrases.
+`head of sales` rather than `sales`, `pr director` rather than `pr`. A bare
+`sales` exclusion also removes `Solutions Engineer, Pre-Sales` and `Pre-sales
+Engineering Manager`, which are real engineering jobs the user wants. A bare
+`pr` matches inside `product`.
+
+Unlike the other blockers, this one encodes a judgement that can be wrong. An
+`Applied AI Architect, Partnerships` is an engineering role serving the
+partnerships org, and a `partnerships` exclusion drops it. That trade can be
+worth making, but **list `function-excluded` drops individually in the run
+report** rather than only counting them, so the user can see a bad call. The
+location blocker states a fact; this one states an opinion.
 
 The junior rule is mechanical on purpose. "Junior or mid-level IC" is genuinely
 ambiguous, and an inconsistent filter is worse than no filter: the user cannot

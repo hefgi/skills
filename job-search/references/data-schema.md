@@ -105,7 +105,23 @@ query_terms_fde: Forward Deployed Engineer, Deployed Engineer, Solutions
   Engineer, Applied AI Engineer, Solutions Architect, Customer Engineer
 query_terms_leadership: VP of Engineering, CTO, Head of Engineering,
   Director of Engineering
-query_terms_exclude: intern, graduate, apprentice, placement
+query_terms_exclude: account executive, account director, account manager,
+  customer success, business development, partnerships, sales director,
+  head of sales, vp of sales, marketing, pr director, communications,
+  recruiter, talent acquisition, people operations, chief of staff,
+  manufacturing engineering, mechanical engineer, electrical engineer,
+  civil engineer, compliance, legal counsel, paralegal
+# Roles in a different profession, dropped as function-excluded. Matched on the
+# role title with word boundaries.
+#
+# Use multi-word phrases, not bare words. "head of sales" rather than "sales",
+# "pr director" rather than "pr". That is what keeps "Solutions Engineer,
+# Pre-Sales" and "Pre-sales Engineering Manager", which are real engineering
+# jobs, while removing "Head of Sales EMEA". The tempting simplification is
+# exactly the one that breaks it.
+#
+# Seniority terms do not belong here: intern, graduate and apprentice are
+# already handled by the junior-ic blocker.
 
 ## Exclusions
 
@@ -162,8 +178,16 @@ nothing distinguishes that from a company with nothing open.
 One row per job found, ever. Sixteen columns, in this order:
 
 ```csv
-job_key,first_seen,last_seen,company,role,url,platform,location,work_mode,track,source,status,applied_date,run_id,drop_reason,notes
+job_key,first_seen,last_seen,company,role,url,platform,location,work_mode,track,source,status,applied_date,run_id,drop_reason,notes,salary,published_date
 ```
+
+`salary` and `published_date` are appended, so anything keyed on the first
+sixteen columns still works. `upsert` reads a sixteen-column file and writes an
+eighteen-column one, filling the new columns empty for rows that predate them.
+Backfilling is possible for Ashby and Greenhouse rows by re-sweeping, since both
+are unauthenticated APIs with no pacing constraint. LinkedIn rows would need a
+fresh browser pass and are not worth re-sweeping for this alone, so expect some
+rows to stay blank.
 
 | Column | Content |
 |---|---|
@@ -181,8 +205,15 @@ job_key,first_seen,last_seen,company,role,url,platform,location,work_mode,track,
 | `status` | See the lifecycle below |
 | `applied_date` | Filled when the status becomes `applied`, from the log. Empty otherwise. |
 | `run_id` | The sweep that created the row, matching a file in `search/runs/` |
-| `drop_reason` | Empty unless `status` is `dropped`. One of `junior-ic`, `us-work-auth`, `location`, `onsite-elsewhere`, `cooldown`, `company-excluded`, `industry`. |
+| `drop_reason` | Empty unless `status` is `dropped`. One of `junior-ic`, `us-work-auth`, `location`, `onsite-elsewhere`, `cooldown`, `company-excluded`, `industry`, `function-excluded`. |
 | `notes` | Free text. A cross-posted duplicate's other URL goes here as `also: <url>`. |
+| `salary` | As advertised, verbatim, with currency and period: `Up to 100 GBP/hr`, `£150,000 - £180,000`. Empty when the posting does not state one. |
+| `published_date` | ISO `YYYY-MM-DD` when the source gives an absolute date. Empty when it gives only a relative one such as "2 days ago", unless the sweep resolves it against the run date. |
+
+**Never infer either value.** An empty salary is honest; a guessed one gets
+quoted into an application. The temptation to normalise `Up to 100 GBP/hr` into
+an annual band is real and would be wrong, because the two are not the same
+offer and only the employer knows the hours.
 
 There is deliberately **no score, rank, fit, or match column**. The policy is to
 apply to anything with title similarity, so a score would be a number nobody

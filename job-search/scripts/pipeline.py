@@ -50,6 +50,11 @@ FIELDS = [
     "run_id",
     "drop_reason",
     "notes",
+    # Appended, so a reader keyed on position still finds the first sixteen.
+    # Never inferred: an empty salary is honest, a guessed one gets quoted into
+    # an application.
+    "salary",
+    "published_date",
 ]
 
 # Transitions anything may make. A status not reachable from its current value
@@ -383,6 +388,150 @@ US_AUTH = re.compile(
 )
 
 
+# "Remote - Texas" is a location requirement wearing the word remote: you must
+# be in Texas, there is simply no office. Only UNqualified remote is genuinely
+# location-independent. Every qualified string contains the bare word, so the
+# qualified test has to run first or it never fires.
+#
+# The negative lookahead lists the qualifiers that are still reachable, so
+# "Remote - EMEA" is not treated as a location requirement.
+QUALIFIED_REMOTE = re.compile(
+    r"remote[\s\-–—,]*(?:in\s+)?"
+    r"(?!global|anywhere|worldwide|international|emea|europe|eu\b|uk\b|int\b"
+    r"|united\s+kingdom)[a-z]",
+    re.IGNORECASE,
+)
+UNQUALIFIED_REMOTE = re.compile(
+    r"^\s*(remote|anywhere|global"
+    r"|remote\s*[-–—,]\s*(global|anywhere|worldwide|international|emea|europe|int))"
+    r"\s*$",
+    re.IGNORECASE,
+)
+
+# Subdivisions of commonly excluded countries. exclude_locations names countries,
+# but boards name states and provinces, so "Remote - Texas" never matches a
+# "United States" exclusion without this. It lives here rather than in
+# search.md because nobody should have to enumerate fifty states by hand.
+COUNTRY_SUBDIVISIONS = {
+    "united states": [
+        "alabama", "alaska", "arizona", "arkansas", "california", "colorado",
+        "connecticut", "delaware", "florida", "georgia", "hawaii", "idaho",
+        "illinois", "indiana", "iowa", "kansas", "kentucky", "louisiana",
+        "maine", "maryland", "massachusetts", "michigan", "minnesota",
+        "mississippi", "missouri", "montana", "nebraska", "nevada",
+        "new hampshire", "new jersey", "new mexico", "new york", "north carolina",
+        "north dakota", "ohio", "oklahoma", "oregon", "pennsylvania",
+        "rhode island", "south carolina", "south dakota", "tennessee", "texas",
+        "utah", "vermont", "virginia", "washington", "west virginia",
+        "wisconsin", "wyoming", "washington d.c.", "washington dc",
+        "district of columbia", "u.s.", "usa", "us",
+        # Cities distinctive enough to name a country on their own.
+        "san francisco", "new york city", "nyc", "seattle", "austin", "boston",
+        "chicago", "denver", "atlanta", "los angeles", "palo alto", "mountain view",
+    ],
+    "canada": ["ontario", "quebec", "british columbia", "alberta", "toronto",
+               "vancouver", "montreal", "ottawa", "calgary"],
+    "australia": ["new south wales", "victoria", "queensland", "sydney",
+                  "melbourne", "brisbane", "perth"],
+    "india": ["bangalore", "bengaluru", "mumbai", "delhi", "hyderabad", "pune",
+              "chennai", "karnataka", "maharashtra"],
+    "singapore": [],
+}
+
+
+def location_mentions(location: str, place: str) -> bool:
+    """Word-boundary test for a place inside a location string.
+
+    A substring test matches `uk` inside unrelated words, which is the same
+    class of bug as the bare `remote` token.
+    """
+    return bool(re.search(rf"(?<![a-z]){re.escape(place)}(?![a-z])",
+                          location or "", re.IGNORECASE))
+
+
+# A hiring policy rather than a place. "Remote-Friendly (Travel-Required) |
+# San Francisco, CA | Seattle, WA" lists two US offices and a policy, and the
+# policy is not a third location the user could take. Left in, it reads as an
+# unnamed reachable place and rescues a posting whose every real location is
+# excluded.
+POLICY_NOT_A_PLACE = re.compile(
+    r"^\s*(remote[\s-]*friendly|hybrid|flexible|distributed|travel[\s-]*required"
+    r"|multiple\s+locations?|various(\s+locations?)?|\d+\s+locations?)"
+    r"[\s\w-]*(\([^)]*\))?\s*$",
+    re.IGNORECASE,
+)
+
+
+def location_parts(location: str) -> list[str]:
+    """Split a multi-location posting into its individual locations.
+
+    "Doha, Qatar; London, UK" is reachable because London is in it. Testing the
+    whole string as one blob would drop it on Doha.
+
+    Policy fragments are removed rather than treated as locations, since a
+    posting that says "Remote-Friendly" alongside two US offices is offering
+    those two offices.
+    """
+    parts = [p.strip() for p in re.split(r"[;|]|\s+or\s+", location or "") if p.strip()]
+    places = [p for p in parts if not POLICY_NOT_A_PLACE.match(p)]
+    # If every part was a policy, fall back to the raw parts: "Remote" alone is
+    # a policy and an answer, and dropping it would leave nothing to test.
+    return places or parts
+
+
+def blocked_location(location: str, work_mode: str, criteria: dict) -> bool:
+    """True when every location on a posting is somewhere the user cannot be.
+
+    A posting is kept if ANY of its locations is reachable, because a role
+    offered in London and New York is a London role to someone in London.
+    """
+    excluded = [e.lower() for e in as_list(criteria.get("exclude_locations", ""))]
+    if not excluded:
+        return False
+    parts = location_parts(location)
+    if not parts:
+        # An absent location is unknown, not excluded. A results page often
+        # omits it, and a false drop costs a job while a false keep costs a
+        # glance.
+        return False
+
+    geography = [g.lower() for g in as_list(criteria.get("geography", ""))]
+
+    for part in parts:
+        qualified = QUALIFIED_REMOTE.search(part)
+        if UNQUALIFIED_REMOTE.match(part):
+            return False            # genuinely location-independent
+
+        # Qualified remote names the country you must live in. Test it against
+        # `geography` rather than `exclude_locations`, because an exclusion list
+        # can never be complete: "Remote - Mexico" is unreachable whether or not
+        # anyone thought to write Mexico down. Reachability is the shorter and
+        # more honest question.
+        if qualified and geography:
+            if not any(location_mentions(part, g) for g in geography):
+                continue            # this location is out; try the next part
+        hit = None
+        for country in excluded:
+            if location_mentions(part, country):
+                hit = country
+                break
+            for sub in COUNTRY_SUBDIVISIONS.get(country, []):
+                if location_mentions(part, sub):
+                    hit = country
+                    break
+            if hit:
+                break
+        if hit is None:
+            return False            # this location is reachable, so keep the row
+        # This location is excluded. work_mode: remote only rescues it when the
+        # remote is unqualified, which the check above already handled: a role
+        # advertised as "Remote - Canada" with work_mode remote still requires
+        # being in Canada.
+        if not qualified and work_mode == "remote" and not location_mentions(part, "remote"):
+            return False
+    return True
+
+
 def blocker_for(job: dict, criteria: dict) -> str | None:
     """Return a drop reason, or None to keep.
 
@@ -410,14 +559,18 @@ def blocker_for(job: dict, criteria: dict) -> str | None:
     if US_AUTH.search(haystack):
         return "us-work-auth"
 
-    location = (job.get("location") or "").lower()
-    for excluded in as_list(criteria.get("exclude_locations", "")):
-        if excluded.lower() in location:
-            # Remote roles are kept even when the company sits in an excluded
-            # country: the exclusion is about where the user must physically be.
-            if (job.get("work_mode") or "").lower() == "remote":
-                continue
-            return "location"
+    # A role in a different profession. Matched on the role title with word
+    # boundaries, so "pr" cannot match inside "product" and "sales" cannot match
+    # inside "pre-sales". The terms are deliberately multi-word phrases for the
+    # same reason: "head of sales" removes the sales leadership role while
+    # leaving "Solutions Engineer, Pre-Sales", which is a real engineering job.
+    for term in as_list(criteria.get("query_terms_exclude", "")):
+        if re.search(rf"(?<![a-z]){re.escape(term)}(?![a-z])", role, re.IGNORECASE):
+            return "function-excluded"
+
+    location = job.get("location") or ""
+    if blocked_location(location, (job.get("work_mode") or "").lower(), criteria):
+        return "location"
 
     onsite_city = (criteria.get("onsite_requires_city") or "").strip().lower()
     if onsite_city and (job.get("work_mode") or "").lower() == "onsite" and location:
@@ -917,6 +1070,8 @@ def cmd_upsert(args) -> int:
             "run_id": args.run_id or "",
             "drop_reason": "",
             "notes": (job.get("notes") or "").strip(),
+            "salary": (job.get("salary") or "").strip(),
+            "published_date": (job.get("published_date") or "").strip(),
         }
         row["track"] = infer_track({**job, "role": role}, criteria)
         if row["track"] == "both":
@@ -950,8 +1105,29 @@ def cmd_upsert(args) -> int:
         seen[key] = row
 
     # Axis 2: against previous runs.
+    #
+    # Take new rows round-robin across sources rather than in harvest order. The
+    # cap is a pacing device, not an editorial one, and it should not decide
+    # that the first board swept gets every slot and the rest get none. A real
+    # run hit a cap of 100 with 170 rows outstanding and wrote 100 rows from one
+    # board, which reads as "a representative 100" and was not.
+    #
+    # Rows already in the pipeline are handled first and uncapped, since bumping
+    # last_seen costs nothing and skipping it would lose the observation.
+    def interleaved(items: list[tuple[str, dict]]) -> list[tuple[str, dict]]:
+        by_source: dict[str, list[tuple[str, dict]]] = {}
+        for key, row in items:
+            by_source.setdefault(row.get("source", ""), []).append((key, row))
+        out, queues = [], list(by_source.values())
+        while queues:
+            for queue in list(queues):
+                out.append(queue.pop(0))
+                if not queue:
+                    queues.remove(queue)
+        return out
+
     added = 0
-    for key, row in seen.items():
+    for key, row in interleaved(list(seen.items())):
         if key in by_key:
             current = by_key[key]
             current["last_seen"] = today
@@ -1146,6 +1322,20 @@ def cmd_report(args) -> int:
                   "| Reason | Count |", "|---|---|"]
         for reason, count in by_drop.most_common():
             lines.append(f"| {reason} | {count} |")
+
+    judged = [r for r in run_rows if r.get("drop_reason") == "function-excluded"]
+    if judged:
+        # Named rather than counted, because unlike a location this encodes a
+        # judgement that can be wrong: an "Applied AI Architect, Partnerships"
+        # is an engineering role that a partnerships exclusion removes. The user
+        # can only spot a bad call if the row is visible.
+        lines += ["", "## Dropped as a different profession", "",
+                  "These matched `query_terms_exclude`. Unlike the other "
+                  "blockers this is a judgement, so they are named rather than "
+                  "counted:", "",
+                  "| Company | Role |", "|---|---|"]
+        for row in judged:
+            lines.append(f"| {row.get('company','')} | {row.get('role','')} |")
 
     if args.blocked:
         lines += ["", "## Sources blocked", "",

@@ -16,6 +16,7 @@ because they are slow and challenge readily.
 ## Contents
 
 - [Shared rules](#shared-rules)
+- [Deciding whether a location is reachable](#deciding-whether-a-location-is-reachable)
 - [Ashby](#ashby)
 - [Greenhouse](#greenhouse)
 - [LinkedIn](#linkedin)
@@ -48,6 +49,51 @@ still found no rows.
 **Paginate by navigation where the board allows it.** A URL carrying the page
 offset is cheaper and more reliable than clicking a Next control and hoping the
 list re-rendered.
+
+## Deciding whether a location is reachable
+
+Every source needs this and every sweep will otherwise reinvent it, so it lives
+here once. The obvious naive implementation is the broken one.
+
+A location is reachable when it names a place inside `geography`, **or** it is
+*unqualified* remote. `Remote`, `Remote - Global`, `Remote - EMEA`, `Anywhere`
+and `Remote - United Kingdom` are reachable. `Remote - Texas`,
+`Remote - California`, `Remote U.S.` and `Remote - India` are not: they are
+onsite-in-a-country roles that happen not to require an office.
+
+**Test qualified remote before testing for the bare word `remote`**, because
+every qualified-remote string contains it. Large US employers write their entire
+board this way, so a sweep that gets this wrong fills the pipeline with one
+company's US postings. In a real run it was 26 rows from a single employer.
+
+```js
+// Qualified first: every qualified string contains the bare word.
+const QUALIFIED_REMOTE = /remote[\s\-–—,]*(?:in\s+)?(?!global|anywhere|worldwide|international|emea|europe|eu\b|uk\b|int\b|united\s+kingdom)[a-z]/i;
+const UNQUALIFIED_REMOTE = /^\s*(remote|anywhere|global|remote\s*[-–—,]\s*(global|anywhere|worldwide|international|emea|europe|int))\s*$/i;
+const REACHABLE = /\b(london|united kingdom|england|scotland|wales|france|paris|ireland|dublin|germany|berlin|munich|netherlands|amsterdam|spain|madrid|portugal|lisbon|poland|warsaw|sweden|stockholm|denmark|copenhagen|italy|milan|belgium|brussels|austria|vienna|finland|helsinki|switzerland|zurich|europe|emea)\b/i;
+
+function reachable(location) {
+  const loc = (location || "").trim();
+  if (!loc) return true;                      // absent is unknown, not excluded
+  // A posting listing several locations is reachable if ANY of them is.
+  return loc.split(/[;|]|\s+or\s+/).map(s => s.trim()).some(p =>
+    UNQUALIFIED_REMOTE.test(p) || (REACHABLE.test(p) && !QUALIFIED_REMOTE.test(p)));
+}
+```
+
+**Match on word boundaries, not substrings.** `uk` as a substring matches inside
+unrelated words. It is the same class of bug as the bare `remote` token.
+
+**Multi-location postings matter.** `Doha, Qatar; London, UK` and
+`London - Hybrid; New York - Hybrid; San Francisco - Hybrid` are both reachable,
+because one listed location is London. Split and keep the row if any part is
+reachable; testing the whole string as one blob drops both.
+
+**An empty location is not a drop.** A results page often omits it. Keep the row
+and let `upsert` decide: a false keep costs one glance, a false drop costs a job.
+
+Harvest the location verbatim anyway. `upsert` applies the real blocker, and one
+place deciding what gets dropped is what makes the run report's counts true.
 
 ## Ashby
 

@@ -344,10 +344,18 @@ The JSON array fed to `upsert`. One object per posting:
     "location": "London, UK",
     "work_mode": "hybrid",
     "source": "ashby",
+    "salary": "",
+    "published_date": "",
     "notes": ""
   }
 ]
 ```
+
+`salary` is the advertised figure verbatim, with currency and period, and
+`published_date` is ISO when the source gives an absolute date. Both are
+optional and both stay empty when the posting does not say. **Never infer
+either**: an empty salary is honest, a guessed one gets quoted into an
+application.
 
 `company`, `role`, and `url` are required, and `upsert` exits non-zero if any is
 missing rather than writing a row that cannot be identified or acted on.

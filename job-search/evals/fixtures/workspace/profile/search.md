@@ -32,7 +32,10 @@ query_terms_fde: Forward Deployed Engineer, Deployed Engineer, Solutions
   Engineer, Applied AI Engineer, Solutions Architect, Member of Technical Staff
 query_terms_leadership: VP of Engineering, CTO, Head of Engineering,
   Director of Engineering
-query_terms_exclude: intern, graduate, apprentice, placement
+query_terms_exclude: account executive, account director, account manager,
+  customer success, business development, partnerships, sales director,
+  head of sales, vp of sales, marketing, pr director, communications,
+  recruiter, talent acquisition, manufacturing engineering
 
 ## Exclusions
 
