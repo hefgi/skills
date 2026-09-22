@@ -1,0 +1,66 @@
+{
+  "context": "Board discovery. The per-company ATSs have no cross-company search, so the directory in profile/boards.md is the only way to reach them and the one asset that makes later sweeps cheaper. This tests that a sweep treats every posting URL as evidence about where jobs live, distinguishes a known board type from an unfamiliar one from a page that is not a board at all, and above all refuses to record a recipe it has not seen return a row. An unverified recipe is worse than none: it reports an empty board forever, indistinguishable from a company with nothing open.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Read the directory instead of a hardcoded list",
+      "max_score": 10,
+      "description": "Planned the sweep from profile/boards.md via pipeline.py boards, rather than from a fixed set of five source names"
+    },
+    {
+      "name": "Used search and board sources differently",
+      "max_score": 10,
+      "description": "Gave query terms to kind:search sources, and iterated kind:board sources over their companies list. Conflating the two means either querying a board that takes no query, or iterating a search source that needs no slug"
+    },
+    {
+      "name": "Saved company slugs from recognised hosts",
+      "max_score": 12,
+      "description": "A posting URL whose host matches a posting_pattern in boards.md had its slug added to that board's companies list"
+    },
+    {
+      "name": "Probed an unfamiliar ATS host",
+      "max_score": 12,
+      "description": "A host that looked like an ATS but matched no known pattern was probed for a public endpoint rather than ignored, using the ladder in discovery.md"
+    },
+    {
+      "name": "Did not save an unverified recipe as working",
+      "max_score": 14,
+      "description": "Any board type recorded without having returned a real row is left unverified, or not recorded at all. This is the rule that prevents a silent permanent zero"
+    },
+    {
+      "name": "Recorded the field mapping, not just the URL",
+      "max_score": 10,
+      "description": "A newly saved board type carries a fields mapping saying which key holds the role, the location, the URL, and whether anything maps to work_mode. Without it a later sweep has to rediscover the shape"
+    },
+    {
+      "name": "Did not treat a plain careers page as a board type",
+      "max_score": 10,
+      "description": "A single company's own careers page, or a system with no public listing endpoint, was not saved as a reusable board type. The signal for an ATS is a host shape repeated across different companies"
+    },
+    {
+      "name": "Flagged what was guessed",
+      "max_score": 8,
+      "description": "Any field derived rather than observed, such as a company name taken from a slug, is called out in notes and in the run report"
+    },
+    {
+      "name": "Wrote boards.md through the script",
+      "max_score": 10,
+      "description": "Company additions went through pipeline.py boards --add-company rather than hand-editing, so a concurrent run cannot clobber the file and existing comments survive"
+    },
+    {
+      "name": "Probed politely",
+      "max_score": 8,
+      "description": "At most a handful of candidate paths per unfamiliar host, tried once, not looped. Probing is requests against someone else's site"
+    },
+    {
+      "name": "Reported how the directory grew",
+      "max_score": 8,
+      "description": "Told the user which boards and companies were added, which is what explains why later sweeps find more while doing less"
+    },
+    {
+      "name": "Still produced a normal sweep",
+      "max_score": 8,
+      "description": "Discovery did not replace the sweep: pipeline.csv was updated and the run report written as usual, and applications/ was not touched"
+    }
+  ]
+}

@@ -28,6 +28,7 @@ handed to `job-apply`, which owns CVs, cover letters, and forms.
 | First-time use, or no search criteria exist | Setup | `references/setup.md` |
 | Find jobs now, refresh or top up the pipeline | Sweep | `references/search.md` |
 | Sweep several sources at once | Orchestrate | `references/orchestration.md` |
+| Add a job board the workspace does not know | Discover | `references/discovery.md` |
 
 Every workflow depends on the workspace. Resolve it first.
 
@@ -48,6 +49,7 @@ Load these when the moment comes, not up front:
 | Deciding whether two postings are the same job | `references/filters.md` |
 | Handing a found job to `job-apply` | `references/handoff.md` |
 | Sweeping several sources in parallel | `references/orchestration.md` |
+| Meeting a job board the workspace does not know | `references/discovery.md` |
 
 ## Step 0: resolve the workspace (always do this first)
 
@@ -94,16 +96,16 @@ Finding more than one workspace means the user has two. Ask which, rather than
 picking: sweeping against the wrong log surfaces jobs they have already applied
 to.
 
-`references/data-schema.md` is the canonical spec for `profile/search.md` and
-`search/pipeline.csv`. Prefer it over inferring structure from whatever files
+`references/data-schema.md` is the canonical spec for `profile/search.md`,
+`profile/boards.md`, and `search/pipeline.csv`. Prefer it over inferring structure from whatever files
 happen to exist. For every other workspace file, `job-apply`'s own
 `references/data-schema.md` is authoritative and this skill only reads them.
 
 ## Ground rules
 
-**This skill writes exactly two paths.** `profile/search.md` and everything
-under `search/`. It never writes `applications/`, `cv/`, `qa/`, or the rest of
-`profile/`. The workspace is shared, so a stray write here would corrupt data
+**This skill writes exactly three paths.** `profile/search.md`,
+`profile/boards.md`, and everything under `search/`. It never writes
+`applications/`, `cv/`, `qa/`, or the rest of `profile/`. The workspace is shared, so a stray write here would corrupt data
 `job-apply` depends on, and the user would find out at the worst moment, mid
 application.
 
@@ -231,7 +233,8 @@ reads and never writes.
 ├── profile/
 │   ├── targets.md              # READ: titles, seniority, the Avoid list
 │   ├── logistics.md            # READ: work authorization, location, salary
-│   └── search.md               # WRITTEN: where and how to look
+│   ├── search.md               # WRITTEN: where and how to look
+│   └── boards.md               # WRITTEN: the source directory, grows each sweep
 ├── applications/log.csv        # READ: the dedup source of truth
 └── search/                     # WRITTEN
     ├── pipeline.csv            # every job found, with its status

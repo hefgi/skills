@@ -104,6 +104,39 @@ ROLE_EXPANSIONS = {
     "eng": "engineering",
 }
 
+# Applicant tracking systems recognisable from a posting URL, and the slug each
+# one is keyed by. This is how a sweep turns a link it happened to see into a
+# board it can harvest directly on every later run, so the list is the main
+# thing worth extending when a new ATS turns up.
+#
+# Every entry here has been confirmed to serve a public listing endpoint. An ATS
+# the user merely applies through, with no way to list its roles, does not
+# belong: iCIMS, Oracle HCM and the like are places you arrive from a search
+# source, not places to sweep.
+ATS_PATTERNS = [
+    ("ashby", r"jobs\.ashbyhq\.com/([^/?#]+)"),
+    ("greenhouse", r"(?:job-boards(?:\.eu)?|boards)\.greenhouse\.io/([^/?#]+)"),
+    ("lever", r"jobs\.lever\.co/([^/?#]+)"),
+    ("smartrecruiters", r"(?:jobs|careers)\.smartrecruiters\.com/([^/?#]+)"),
+    ("workable", r"apply\.workable\.com/([^/?#]+)"),
+    ("teamtailor", r"([a-z0-9-]+)\.teamtailor\.com"),
+    ("recruitee", r"([a-z0-9-]+)\.recruitee\.com"),
+    ("personio", r"([a-z0-9-]+)\.jobs\.personio\.(?:de|com)"),
+    ("rippling", r"ats\.rippling\.com/([^/?#]+)"),
+    ("breezy", r"([a-z0-9-]+)\.breezy\.hr"),
+    # Workday needs the tenant, the numbered pod and the site, because a POST to
+    # the wrong combination returns 422 rather than anything recoverable. Keyed
+    # as tenant/wdN/site so the whole triple survives into the directory.
+    # The optional locale segment is skipped explicitly: a bare [a-z-]+ would
+    # also match the site name itself and capture whatever followed it. The site
+    # is restricted to URL-shaped characters so a bare tenant URL, which several
+    # logged applications are, yields nothing rather than capturing trailing
+    # prose as a site name. A Workday POST needs all three parts exactly, and a
+    # wrong one returns 422, so half a match is worse than no match.
+    ("workday",
+     r"([a-z0-9-]+)\.(wd\d+)\.myworkdayjobs\.com/(?:[a-z]{2}-[A-Z]{2}/)?([A-Za-z0-9_-]+)"),
+]
+
 # Trailing qualifiers that describe who may apply rather than what the job is.
 # Two postings differing only by one of these are the same req to a candidate.
 ROLE_QUALIFIER = re.compile(
@@ -208,6 +241,24 @@ def job_key(company: str, role: str) -> str:
     company_key = normalize_company(company)
     role_key, _ = normalize_role(role)
     return f"{company_key}__{role_key}"
+
+
+def board_slug_from_url(url: str) -> str | None:
+    """Return `ats:slug` when a URL is recognisably an ATS board, else None.
+
+    One place decides what a board slug looks like, so mining a log and
+    discovering a board mid-sweep cannot disagree about the same URL. A slug
+    that differs between the two would split one board into two directory
+    entries, and the second would never be swept.
+    """
+    for ats, pattern in ATS_PATTERNS:
+        found = re.search(pattern, url or "", re.IGNORECASE)
+        if not found:
+            continue
+        parts = [g for g in found.groups() if g]
+        # Workday carries tenant, pod and site; everything else is one slug.
+        return f"{ats}:{'/'.join(p.lower() for p in parts)}"
+    return None
 
 
 def canonical_url(url: str) -> str:
@@ -469,14 +520,9 @@ def cmd_mine(args) -> int:
             titles.setdefault(slug(role), role)
 
         url = row.get("url") or ""
-        for host, pattern in (
-            ("ashby", r"jobs\.ashbyhq\.com/([^/?#]+)"),
-            ("greenhouse", r"(?:job-boards(?:\.eu)?|boards)\.greenhouse\.io/([^/?#]+)"),
-            ("lever", r"jobs\.lever\.co/([^/?#]+)"),
-        ):
-            found = re.search(pattern, url, re.IGNORECASE)
-            if found:
-                boards.add(f"{host}:{found.group(1).lower()}")
+        board = board_slug_from_url(url)
+        if board:
+            boards.add(board)
 
         notes = (row.get("notes") or "").lower()
         status = (row.get("status") or "").strip().lower()
@@ -572,6 +618,100 @@ def cmd_mine(args) -> int:
         )
 
     print(json.dumps(summary, indent=2))
+    return 0
+
+
+def parse_boards(path: Path) -> list[dict]:
+    """Parse profile/boards.md into a list of board definitions.
+
+    Same hand-editable `## Board: <name>` plus `key: value` shape as the other
+    profile files, so a user can add a board by hand without learning a format.
+    """
+    if not path.exists():
+        return []
+    boards: list[dict] = []
+    current: dict | None = None
+    key = None
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        line = raw.rstrip()
+        heading = re.match(r"^##\s+Board:\s*(.+)$", line)
+        if heading:
+            current = {"name": heading.group(1).strip()}
+            boards.append(current)
+            key = None
+            continue
+        if current is None or not line.strip() or line.lstrip().startswith("#"):
+            continue
+        if re.match(r"^\s+\S", line) and key:
+            current[key] += " " + line.strip()
+            continue
+        match = re.match(r"^([a-z_][a-z0-9_]*)\s*:\s*(.*)$", line)
+        if match:
+            key, value = match.group(1), match.group(2).strip()
+            current[key] = value
+    for board in boards:
+        for k, v in list(board.items()):
+            if isinstance(v, str):
+                board[k] = re.sub(r"\s+", " ", v).strip()
+    return boards
+
+
+def cmd_boards(args) -> int:
+    """Read profile/boards.md, or add a company to a board, deterministically.
+
+    Editing this file by hand during a fan-out run is how two agents clobber
+    each other's discoveries, so every write goes through here and the
+    orchestrator is the only caller.
+    """
+    path = Path(args.boards)
+    boards = parse_boards(path)
+    by_name = {b["name"]: b for b in boards}
+
+    if args.add_company:
+        for entry in args.add_company:
+            if ":" not in entry:
+                die(f"--add-company expects <board>:<slug>, got {entry!r}", 2)
+            name, company = entry.split(":", 1)
+            name, company = name.strip(), company.strip()
+            if name not in by_name:
+                die(f"no board named {name!r} in {path}. Discover it first, or "
+                    f"add a '## Board: {name}' block by hand.")
+            board = by_name[name]
+            known = [c.strip() for c in board.get("companies", "").split(",") if c.strip()]
+            if company not in known:
+                known.append(company)
+                board["companies"] = ", ".join(sorted(known))
+
+        # Rewrite only the companies lines, so hand-written comments and any key
+        # this version does not know about survive untouched.
+        lines = path.read_text(encoding="utf-8").splitlines() if path.exists() else []
+        out, current = [], None
+        for line in lines:
+            heading = re.match(r"^##\s+Board:\s*(.+)$", line)
+            if heading:
+                current = heading.group(1).strip()
+            if re.match(r"^companies\s*:", line) and current in by_name:
+                out.append(f"companies: {by_name[current].get('companies', '')}")
+                continue
+            out.append(line)
+        tmp = path.with_suffix(".tmp")
+        tmp.write_text("\n".join(out) + "\n", encoding="utf-8")
+        os.replace(tmp, path)
+
+    if args.kind:
+        boards = [b for b in boards if b.get("kind") == args.kind]
+    if args.tier:
+        boards = [b for b in boards if b.get("tier") == args.tier]
+    if args.verified_only:
+        boards = [b for b in boards if b.get("verified")]
+
+    if args.format == "json":
+        print(json.dumps(boards, indent=2))
+    else:
+        for b in boards:
+            companies = [c for c in b.get("companies", "").split(",") if c.strip()]
+            print(f"{b['name']}\t{b.get('kind','?')}\ttier{b.get('tier','?')}\t"
+                  f"{len(companies)} companies\t{'verified' if b.get('verified') else 'UNVERIFIED'}")
     return 0
 
 
@@ -1036,6 +1176,17 @@ def main() -> int:
     p = sub.add_parser("init", help="create an empty pipeline.csv with the header")
     p.add_argument("--pipeline", required=True)
     p.set_defaults(func=cmd_init)
+
+    p = sub.add_parser("boards", help="read profile/boards.md, or add a company")
+    p.add_argument("--boards", required=True)
+    p.add_argument("--kind", choices=["search", "board"])
+    p.add_argument("--tier", choices=["1", "2"])
+    p.add_argument("--verified-only", action="store_true",
+                   help="skip boards that have never returned a row")
+    p.add_argument("--add-company", action="append",
+                   help="<board>:<slug>, repeatable. The only sanctioned write.")
+    p.add_argument("--format", choices=["tsv", "json"], default="tsv")
+    p.set_defaults(func=cmd_boards)
 
     p = sub.add_parser("merge", help="concatenate per-agent shard files")
     p.add_argument("--shard", action="append", required=True,

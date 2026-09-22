@@ -70,6 +70,30 @@ scripts/pipeline.py key --company "Ash by Slingshot AI" --role "Technical Ex-Fou
 
 Returns `job_key`, `company_key`, `role_key`, and the captured `seniority`.
 
+### boards
+
+Read `profile/boards.md`, or add a company to a board. The only sanctioned write
+to that file.
+
+```bash
+scripts/pipeline.py boards --boards "$W/profile/boards.md" --kind board --tier 1
+scripts/pipeline.py boards --boards "$W/profile/boards.md" --add-company lever:palantir
+```
+
+| Option | Effect |
+|---|---|
+| `--boards` | Required. Path to `profile/boards.md`. |
+| `--kind` | `search` or `board`. Search sources take a query; board sources take a slug. |
+| `--tier` | `1` public endpoint, `2` needs the logged-in browser. |
+| `--verified-only` | Skip recipes that have never returned a row. |
+| `--add-company` | `<board>:<slug>`, repeatable. Refuses an unknown board. |
+| `--format` | `tsv` (default) or `json`. |
+
+Adding is idempotent and rewrites only the `companies:` lines, so hand-written
+comments and any key this version does not know about survive. Under a fan-out
+run only the orchestrator calls it, because concurrent edits to one file clobber
+each other.
+
 ### merge
 
 Concatenate per-agent shard files into one harvest, for an orchestrated sweep.

@@ -11,6 +11,7 @@ Its `references/data-schema.md` is authoritative for those files.
 
 - [Layout](#layout)
 - [profile/search.md](#profilesearchmd)
+- [profile/boards.md](#profileboardsmd)
 - [search/pipeline.csv](#searchpipelinecsv)
 - [Status lifecycle](#status-lifecycle)
 - [search/runs/<run-id>.md](#searchrunsrun-idmd)
@@ -22,6 +23,7 @@ Its `references/data-schema.md` is authoritative for those files.
 ```
 <workspace>/
 ├── profile/search.md        # written by Setup, edited by hand afterwards
+├── profile/boards.md        # the source directory, grows on every sweep
 └── search/
     ├── pipeline.csv         # every job found, one row each
     └── runs/
@@ -86,13 +88,14 @@ industries_avoid: gambling, adtech
 
 sources: ashby, greenhouse, linkedin, ai-boards, career-pages
 # Sweep order, most productive first, so a run cut short by a challenge page has
-# already harvested the best sources. Derived from the application log.
+# already harvested the best sources. Names entries in profile/boards.md.
+# Leave it empty to sweep everything in that file, which is usually what you
+# want once the directory has grown past the sources this skill shipped with.
 sources_disabled:
-known_company_boards: ashby:cohere, ashby:openai, ashby:langchain,
-  greenhouse:physicsx
-# Mined from applications/log.csv URLs, and appended to whenever a sweep finds a
-# new slug. Revisiting a board the user already applied through is the cheapest
-# source of new roles there is.
+# known_company_boards moved to profile/boards.md, which holds the endpoint and
+# field mapping for each board type as well as its companies. A workspace that
+# still has this key here is pre-migration: Setup moves it and leaves this line
+# out. Nothing reads it any more.
 
 ## Query terms
 
@@ -123,6 +126,35 @@ set", so keep the key rather than deleting it.
 `query_terms_fde` and `query_terms_leadership` are keyed to the track names in
 `targets.md`. A workspace with different tracks uses `query_terms_<track>` for
 each, and `pipeline.py` reads whichever exist.
+
+## profile/boards.md
+
+The directory of job sources this workspace knows about. Seeded by Setup and
+extended by every sweep, so it is the one file that makes later runs cheaper
+than earlier ones.
+
+Same `key: value` shape as the other profile files, grouped under
+`## Board: <name>` headings.
+
+| Key | Meaning |
+|---|---|
+| `kind` | `search` takes a query and returns jobs across companies, needing no slug. `board` returns one company's roles and needs a slug. This decides how a sweep uses the source. |
+| `tier` | `1` is a public endpoint with no session, safe to sweep in parallel. `2` needs the logged-in browser, so one agent per domain. The orchestrator shards on this. |
+| `api` | The endpoint, with `{slug}`, `{term}` or `{city}` placeholders |
+| `board_url` | Where a human sees the board |
+| `fields` | `source_key->pipeline_column` mapping. What a later sweep uses instead of rediscovering the shape. |
+| `posting_pattern` | Regex that recognises this board in a posting URL, capturing the slug |
+| `verified` | Date the recipe last actually returned a row. Absent means unverified: a guess, not a source. |
+| `companies` | Comma-separated slugs known on this board. Only `board` kinds have these. |
+| `notes` | Failure modes, quirks, and anything that was guessed rather than observed |
+
+**Write to it only through `pipeline.py boards --add-company`.** Under a fan-out
+run, agents report discovered slugs and the orchestrator merges once, because
+concurrent edits to one file clobber each other.
+
+An unverified board is left unverified rather than being quietly promoted. A
+recipe that has never returned a row reports an empty board on every sweep, and
+nothing distinguishes that from a company with nothing open.
 
 ## search/pipeline.csv
 

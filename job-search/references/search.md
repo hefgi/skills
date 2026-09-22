@@ -52,9 +52,26 @@ fetching rather than deciding.
   source that supports search. Weight the tracks by their ratio in the
   application log, since that is how the user splits their real effort.
 - **Locations**: from `geography`.
-- **Sources**: `sources:` order from `search.md`, minus `sources_disabled`.
-  The order matters because a run that gets cut short should already have swept
-  the most productive board.
+- **Sources**: read them from `profile/boards.md`, not from a fixed list:
+
+  ```bash
+  "$PIPELINE" boards --boards "$W/profile/boards.md" --verified-only --format json
+  ```
+
+  Two kinds come back, and they are used differently. A `kind: search` source
+  takes the query terms and returns jobs across many companies. A `kind: board`
+  source is iterated over its `companies` list. Run both: search sources are
+  what discover new companies, board sources are what harvest the ones already
+  known, cheaply.
+
+  Order by `sources:` in `search.md` where it is set, skipping
+  `sources_disabled`, because a run cut short should already have swept the most
+  productive source. An empty `sources:` means sweep everything in the
+  directory, which is usually right once it has grown.
+
+  `--verified-only` skips recipes that have never returned a row. An unverified
+  recipe reports an empty board, which is indistinguishable from a company with
+  nothing open.
 - **Recency**: bound it. A weekly sweep that does not filter by date re-reads
   the same postings every time and finds nothing new for the cost of everything.
 
@@ -169,6 +186,15 @@ missing beyond those is fine: `pipeline.py` fills sensible defaults, and a
 results page genuinely does not carry a full posting body. Do not open every
 posting to enrich a row. That multiplies the request count by twenty for detail
 that `job-apply` will read properly at application time anyway.
+
+**Record every board you meet.** A posting URL is also evidence about where jobs
+live. When its host matches a `posting_pattern` in `boards.md`, that is a company
+slug worth keeping; when it matches nothing and looks like an ATS, it may be a
+board type the workspace has never seen. `references/discovery.md` covers both,
+including when not to bother. This is what makes each sweep wider than the last.
+
+Under a fan-out run, report slugs rather than writing them: `boards.md` is a
+read-modify-write file and concurrent edits clobber.
 
 **Do not filter while sweeping.** Collect everything with title similarity and
 let `upsert` apply the blockers. One place deciding what gets dropped is what

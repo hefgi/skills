@@ -3,9 +3,13 @@
 URL patterns, extraction, and failure modes per source. Read the one you are
 about to sweep rather than the whole file.
 
-Sweep order comes from `sources:` in `search.md`, which Setup orders by how
-often the user actually applied through each. The order below matches the
-typical result, and the reasoning generalizes: boards with a public JSON API
+These are the recipes the skill ships with. They are not the whole list: a
+workspace also has `profile/boards.md`, the directory its own sweeps have built,
+and `references/discovery.md` covers adding to it. A board in that file with a
+`fields` mapping needs no recipe here.
+
+Sweep order comes from `boards.md`, ordered by how often the user actually
+applied through each. The reasoning generalizes: sources with a public JSON API
 first, because they are fast, reliable, and unguarded; search engines last,
 because they are slow and challenge readily.
 
@@ -17,7 +21,7 @@ because they are slow and challenge readily.
 - [LinkedIn](#linkedin)
 - [AI and startup boards](#ai-and-startup-boards)
 - [Career pages and Google](#career-pages-and-google)
-- [Growing known_company_boards](#growing-known_company_boards)
+- [Growing the directory](#growing-the-directory)
 
 ## Shared rules
 
@@ -51,8 +55,8 @@ The highest-yield source for most users, and the one to get right.
 
 **Ashby has no global job search.** There is no cross-company query. Every sweep
 is per-company, against a board you already know about. That single constraint
-shapes the whole recipe: Ashby pays off through `known_company_boards` growing
-over time, not through search.
+shapes the whole recipe: Ashby pays off through the directory in
+`profile/boards.md` growing over time, not through search.
 
 ### Board sweep, per slug
 
@@ -309,7 +313,7 @@ Career pages carry the load; Google is a last resort for discovering new slugs.
 
 ### Career pages, deterministic
 
-For each company in `known_company_boards`, and each company mined from the log:
+For each company in `profile/boards.md`, and each company mined from the log:
 
 1. Try the Ashby or Greenhouse API for its slug.
 2. Otherwise `https://<domain>/careers`, `/jobs`, `/careers/jobs`.
@@ -332,7 +336,7 @@ Restrict with `site:` to `jobs.ashbyhq.com`, `job-boards.greenhouse.io`, or
 requests and yields nothing.
 
 **The purpose is discovering board slugs, not harvesting postings.** Pull the
-company slug out of each result path, add it to `known_company_boards`, and let
+company slug out of each result path, add it to `profile/boards.md`, and let
 the Ashby or Greenhouse recipe do the actual extraction. That reframing is why
 three queries is enough.
 
@@ -345,24 +349,18 @@ Google is the weakest link in a browser-only sweep, which is why it is last,
 capped, and scoped to slug discovery. If it becomes reliably blocked, the right
 fix is enabling a search API for slug discovery alone, not fighting the browser.
 
-## Growing known_company_boards
+## Growing the directory
 
-The compounding loop that makes Ashby and Greenhouse productive despite having
-no cross-company search.
+Moved to `references/discovery.md`, which covers both halves of it: adding a
+company to a board type already known, and probing an unfamiliar host to work
+out whether it is a board type at all.
 
-Every sweep, whenever a posting URL matches a known ATS pattern, extract the
-slug and add it to `known_company_boards` in `search.md` if it is new:
+The short version, because it is what makes the per-company sources viable:
+Ashby, Greenhouse, Lever and the rest have no cross-company search, so the only
+way to sweep them is to know which boards exist. `profile/boards.md` is that
+directory, and it is the one asset a sweep builds that makes the next sweep
+cheaper.
 
-| Pattern | Slug |
-|---|---|
-| `jobs.ashbyhq.com/<slug>/<uuid>` | `ashby:<slug>` |
-| `job-boards(.eu).greenhouse.io/<slug>/...` | `greenhouse:<slug>` |
-| `jobs.lever.co/<slug>/...` | `lever:<slug>` |
-
-LinkedIn is the main feeder here: its postings link out to company ATS boards, so
-a LinkedIn sweep discovers Ashby slugs that the next Ashby sweep harvests
-directly and far more cheaply.
-
-Tell the user when slugs were added and how many. It explains why later sweeps
-find more while doing less, and it is the clearest signal the skill is improving
-with use.
+Every posting URL a sweep sees is a candidate. The recipes above are the ones
+this skill ships with; the directory holds those plus everything the user's own
+sweeps have turned up.

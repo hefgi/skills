@@ -59,7 +59,7 @@ Judgement, not a formula.
 
 **Fan out when** there are enough sources that serial work would take long
 enough to matter. The clearest case is a workspace with a long
-`known_company_boards`: sixteen slugs is sixteen independent HTTP fetches, and
+`profile/boards.md`: nineteen board slugs is nineteen independent HTTP fetches, and
 sharding those across agents is nearly free.
 
 **Stay serial when:**
@@ -195,7 +195,7 @@ Sweep exactly the one source in your prompt. Do not spawn agents.
 Write your rows to your own shard file and nothing else.
 
 Do NOT run `pipeline.py upsert`. Do NOT write search/pipeline.csv.
-Do NOT edit profile/search.md, including known_company_boards.
+Do NOT edit profile/search.md or profile/boards.md.
 Do NOT write the run report. The orchestrator owns all of those.
 
 Report discovered ATS slugs to me in a SLUGS message instead of writing them.
@@ -347,8 +347,8 @@ ambiguous on track, and any near-match it deliberately kept as two rows.
 Agents write only their own shard.**
 
 Each is a read-modify-write that corrupts under concurrency. The pipeline loses
-rows. `known_company_boards` loses slugs: agents send `SLUGS`, you merge them
-once, at the end, after the upsert.
+rows. `profile/boards.md` loses slugs: agents send `SLUGS`, you merge them once,
+at the end, after the upsert, with `pipeline.py boards --add-company`.
 
 Write the report with every blocked source named, per `search.md` Phase F, using
 one `--blocked` flag per source.

@@ -83,6 +83,10 @@ scripts/pipeline.py init --pipeline "$W/search/pipeline.csv"
 Then write `profile/search.md` with every key present and empty, from the
 template in `references/data-schema.md`. Fill it as the following steps resolve.
 
+**Seed `profile/boards.md`** by copying `assets/boards-seed.md` from the skill.
+It ships thirteen verified sources, so a first sweep is already wider than the
+five this skill used to hardcode. Mining in step 4 then fills in the companies.
+
 **Add the `search:` block to `.job-apply/config.yaml` if it is missing**, with
 the keys and defaults from `data-schema.md`. `references/orchestration.md` reads
 `max_concurrent_sweeps` and `max_concurrent_browser` from there, and a key that
@@ -106,7 +110,7 @@ It prints JSON. What each part is for:
 | Field | Seeds | Why it is trustworthy |
 |---|---|---|
 | `platforms` | The `sources:` order | Ranked by how often the user actually applied there. On a real log this is decisive: one workspace showed Ashby at 38 of 104 applications, so Ashby sweeps first. |
-| `known_company_boards` | `known_company_boards` | Slugs pulled straight out of the URLs already applied to. These boards are known to carry roles the user wanted. |
+| `known_company_boards` | `companies` in `profile/boards.md` | Slugs pulled straight out of the URLs already applied to, across every ATS in `ATS_PATTERNS`. On a real 104-row log this finds 19 boards across five different ATSs. |
 | `titles` | `query_terms_<track>` | Every title applied to, which is broader and more specific than a remembered list. |
 | `titles_not_in_targets` | A question in step 6 | The delta between what they applied to and what `targets.md` claims they want. This is the highest-value output of mining. |
 | `tracks` | The per-track query budget | The fde-to-leadership ratio in the log is how the user actually splits their effort. |
