@@ -69,6 +69,14 @@ fetching rather than deciding.
   productive source. An empty `sources:` means sweep everything in the
   directory, which is usually right once it has grown.
 
+  **`sources:` is an ordering hint, not the list.** It predates the directory and
+  its default value names two things that are not boards: `ai-boards` and
+  `career-pages` are recipe sections in `sources.md`, not entries in
+  `boards.md`. So order by it where the names match, then sweep whatever else
+  the directory holds. A verified board the list does not mention is still
+  swept; a name in the list with no board behind it is skipped and reported as
+  not attempted.
+
   `--verified-only` skips recipes that have never returned a row. An unverified
   recipe reports an empty board, which is indistinguishable from a company with
   nothing open.

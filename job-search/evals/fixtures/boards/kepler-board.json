@@ -1,0 +1,9 @@
+{
+  "_comment": "What a {host}/jobs.json probe returns for the jobvault fixture. Field names deliberately differ from every shipped recipe, so the agent has to record an actual fields mapping rather than assuming a known shape.",
+  "tenant": "kepler",
+  "organisation": "Kepler Robotics",
+  "postings": [
+    {"ref": "jv-8801", "headline": "Forward Deployed Engineer", "place": "London, United Kingdom", "arrangement": "hybrid", "permalink": "https://kepler.jobvault.io/roles/jv-8801"},
+    {"ref": "jv-8802", "headline": "Staff Platform Engineer", "place": "London, United Kingdom", "arrangement": "remote", "permalink": "https://kepler.jobvault.io/roles/jv-8802"}
+  ]
+}

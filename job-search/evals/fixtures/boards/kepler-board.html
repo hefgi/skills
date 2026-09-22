@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<!--
+  Stand-in for an applicant tracking system the workspace has NEVER seen:
+  "jobvault", at {slug}.jobvault.io. Nothing in ATS_PATTERNS matches it, so a
+  sweep must notice the host shape, probe for an endpoint, and only then record
+  it as a board type.
+
+  The probe ladder in discovery.md should find kepler-board.json, served at the
+  path a {host}/jobs.json probe would hit. The point of the scenario is that the
+  agent verifies it returns real rows BEFORE writing it down as working.
+-->
+<html lang="en">
+<head><meta charset="utf-8"><title>Kepler Robotics Careers | JobVault</title>
+<link rel="alternate" type="application/json" href="kepler-board.json">
+</head>
+<body>
+<div class="jobvault-board" data-tenant="kepler">
+  <h1>Open roles at Kepler Robotics</h1>
+  <ul class="jv-listing">
+    <li class="jv-job">
+      <a href="https://kepler.jobvault.io/roles/jv-8801">Forward Deployed Engineer</a>
+      <span class="jv-loc">London, United Kingdom</span><span class="jv-mode">Hybrid</span>
+    </li>
+    <li class="jv-job">
+      <a href="https://kepler.jobvault.io/roles/jv-8802">Staff Platform Engineer</a>
+      <span class="jv-loc">London, United Kingdom</span><span class="jv-mode">Remote</span>
+    </li>
+  </ul>
+  <p class="jv-footer">Powered by JobVault</p>
+</div>
+</body>
+</html>

@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<!--
+  A NEGATIVE case: one company's own careers page on its own domain. It is not
+  an ATS, there is no {slug}.vendor.com shape repeated across companies, and no
+  listing endpoint. A sweep should harvest the jobs and must NOT record
+  "acmerobotics.example" as a reusable board type.
+-->
+<html lang="en">
+<head><meta charset="utf-8"><title>Careers at Acme Robotics</title></head>
+<body>
+<h1>Work with us</h1>
+<div class="roles">
+  <div class="role"><a href="/careers/fde-london">Forward Deployed Engineer</a>
+    <span>London, UK</span></div>
+</div>
+</body>
+</html>

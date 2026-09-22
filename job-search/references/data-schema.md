@@ -148,8 +148,9 @@ Same `key: value` shape as the other profile files, grouped under
 | `companies` | Comma-separated slugs known on this board. Only `board` kinds have these. |
 | `notes` | Failure modes, quirks, and anything that was guessed rather than observed |
 
-**Write to it only through `pipeline.py boards --add-company`.** Under a fan-out
-run, agents report discovered slugs and the orchestrator merges once, because
+**Write to it only through `pipeline.py boards`**: `--add-company` for a slug on
+a board that exists, `--add-board` for a newly discovered board type. Under a
+fan-out run, agents report discoveries and the orchestrator merges once, because
 concurrent edits to one file clobber each other.
 
 An unverified board is left unverified rather than being quietly promoted. A
@@ -172,11 +173,11 @@ job_key,first_seen,last_seen,company,role,url,platform,location,work_mode,track,
 | `company` | As advertised |
 | `role` | As advertised, with the original punctuation. Quoted by the CSV writer when it contains a comma. |
 | `url` | The posting URL, query string stripped |
-| `platform` | `ashby`, `greenhouse`, `linkedin`, `lever`, `workable`, `teamtailor`, `rippling`, `icims`, `workday`, `direct`, `other`. The same vocabulary `applications/log.csv` uses, so a row crossing to `job-apply` needs no translation. |
+| `platform` | Which system the application is actually made through: `ashby`, `greenhouse`, `linkedin`, `lever`, `workable`, `teamtailor`, `rippling`, `icims`, `workday`, `direct`, `other`, or a newly discovered board's `name`. Shares `applications/log.csv`'s vocabulary so a row crossing to `job-apply` needs no translation, and extends with it: a board worth sweeping is a board worth naming. |
 | `location` | As advertised |
 | `work_mode` | `remote`, `hybrid`, `onsite`, `unknown` |
 | `track` | `fde`, `leadership`, or `both`. `both` is a real answer, not a failure: "Head of Forward Deployed Engineering" genuinely fits either, and `job-apply` resolves it against the posting text. |
-| `source` | Which sweep found it first: `ashby`, `greenhouse`, `linkedin`, `ai-boards`, `career-pages` |
+| `source` | Which source found it first. Any board `name` from `profile/boards.md`, plus `career-pages` for a company's own site. This is deliberately open: the directory grows, so a column recording which sweep found a row has to grow with it. |
 | `status` | See the lifecycle below |
 | `applied_date` | Filled when the status becomes `applied`, from the log. Empty otherwise. |
 | `run_id` | The sweep that created the row, matching a file in `search/runs/` |

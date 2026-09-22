@@ -667,6 +667,40 @@ def cmd_boards(args) -> int:
     boards = parse_boards(path)
     by_name = {b["name"]: b for b in boards}
 
+    if args.add_board:
+        name = args.add_board.strip()
+        if name in by_name:
+            die(f"board {name!r} already exists in {path}. Use --add-company to "
+                f"add a slug to it, or edit the block by hand to change it.")
+        if not args.api:
+            die("--add-board needs --api, the endpoint the recipe calls", 2)
+        if not args.fields:
+            die("--add-board needs --fields, the source_key->column mapping. "
+                "Without it a later sweep has to rediscover the payload shape", 2)
+
+        block = [f"\n## Board: {name}",
+                 f"kind: {args.kind_of or 'board'}",
+                 f"tier: {args.tier_of or '1'}",
+                 f"api: {args.api}"]
+        if args.board_url:
+            block.append(f"board_url: {args.board_url}")
+        block.append(f"fields: {args.fields}")
+        if args.posting_pattern:
+            block.append(f"posting_pattern: {args.posting_pattern}")
+        # Absent rather than empty when unverified: a `verified:` line with no
+        # date reads as a field someone forgot to fill, while no line at all is
+        # unambiguous. --verified-only keys on presence.
+        if args.verified:
+            block.append(f"verified: {args.verified}")
+        if args.notes:
+            block.append(f"notes: {args.notes}")
+        block.append("companies:")
+
+        with path.open("a", encoding="utf-8") as fh:
+            fh.write("\n".join(block) + "\n")
+        boards = parse_boards(path)
+        by_name = {b["name"]: b for b in boards}
+
     if args.add_company:
         for entry in args.add_company:
             if ":" not in entry:
@@ -1115,8 +1149,19 @@ def cmd_report(args) -> int:
 
     if args.blocked:
         lines += ["", "## Sources blocked", "",
-                  "Blocked is not the same as empty. These were not swept:", ""]
+                  "A board that refused us. Not the same as a board with "
+                  "nothing open, and it needs the user to act:", ""]
         for entry in args.blocked:
+            lines.append(f"- {entry}")
+
+    if args.not_swept:
+        # A third state, because folding it into "blocked" tells the user to go
+        # clear a challenge that never happened, and folding it into the source
+        # counts tells them a board is dry when nobody looked.
+        lines += ["", "## Sources not attempted", "",
+                  "Neither blocked nor empty: nothing tried to sweep these, so "
+                  "they are not evidence of anything:", ""]
+        for entry in args.not_swept:
             lines.append(f"- {entry}")
 
     if reappeared:
@@ -1184,7 +1229,22 @@ def main() -> int:
     p.add_argument("--verified-only", action="store_true",
                    help="skip boards that have never returned a row")
     p.add_argument("--add-company", action="append",
-                   help="<board>:<slug>, repeatable. The only sanctioned write.")
+                   help="<board>:<slug>, repeatable. Adds a company to a board "
+                        "that already exists.")
+    p.add_argument("--add-board", help="record a newly discovered board type")
+    p.add_argument("--api", help="with --add-board: the endpoint")
+    p.add_argument("--fields", help="with --add-board: source_key->column mapping")
+    p.add_argument("--board-url", help="with --add-board: where a human sees it")
+    p.add_argument("--posting-pattern",
+                   help="with --add-board: regex recognising it in a posting URL")
+    p.add_argument("--kind-of", choices=["search", "board"],
+                   help="with --add-board, default board")
+    p.add_argument("--tier-of", choices=["1", "2"],
+                   help="with --add-board, default 1")
+    p.add_argument("--verified",
+                   help="with --add-board: what it returned and when. Omit when "
+                        "the recipe has not actually returned a row")
+    p.add_argument("--notes", help="with --add-board: quirks, and what was guessed")
     p.add_argument("--format", choices=["tsv", "json"], default="tsv")
     p.set_defaults(func=cmd_boards)
 
@@ -1235,6 +1295,9 @@ def main() -> int:
     p.add_argument("--run-id")
     p.add_argument("--today", help="override the date used to pick rows this run "
                                    "touched; for tests and fixtures")
+    p.add_argument("--not-swept", action="append", default=[],
+                   help="a source nothing attempted this run, and why; repeat "
+                        "per source. Distinct from blocked and from empty.")
     p.add_argument("--blocked", action="append", default=[],
                    help="a source that could not be swept; repeat per source. "
                         "Repeatable rather than comma-separated because a "

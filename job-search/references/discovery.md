@@ -108,8 +108,21 @@ zero.
 
 ## What to write
 
-Add a `## Board:` block to `profile/boards.md` with at least `kind`, `tier`,
-`api`, and `fields`. The schema is in `references/data-schema.md`.
+Record it through the script, which refuses a board with no `fields` mapping and
+will not silently overwrite one that exists:
+
+```bash
+"$PIPELINE" boards --boards "$W/profile/boards.md" \
+  --add-board jobvault \
+  --api 'https://{slug}.jobvault.io/jobs.json' \
+  --fields 'headline->role, place->location, arrangement->work_mode, permalink->url' \
+  --posting-pattern '([a-z0-9-]+)\.jobvault\.io' \
+  --verified '2026-09-22, 2 roles for kepler' \
+  --notes 'slug substitution inferred from a single tenant'
+```
+
+Omit `--verified` when the recipe has not actually returned a row. The schema is
+in `references/data-schema.md`.
 
 `fields` is the mapping that matters, because it is what a later sweep uses
 without rediscovering anything: which key holds the role, which the location,
@@ -117,6 +130,12 @@ and whether anything maps to `work_mode`. Three sources supply work mode
 directly (`workplaceType` on Lever, `workplace` on Workable, `location.remote`
 on SmartRecruiters), and most supply none, which is worth recording either way
 so a later sweep does not go looking.
+
+**Rows from a newly discovered board carry its name.** Set both `source` and
+`platform` to the board's `name`, the same string used in `boards.md`. Neither
+column is a closed list, precisely so the directory can grow: filing a jobvault
+row as `other` throws away the one fact that would let a later sweep route it
+back to the recipe that found it.
 
 **Flag what was guessed.** A field derived rather than observed goes in `notes`,
 and in the run report. The next person to read the file cannot tell the

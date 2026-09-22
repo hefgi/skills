@@ -64,6 +64,15 @@ are genuinely exercised rather than matched against a convenient shape:
   harvest a partial page as if it were everything.
 - `linkedin-challenge.html` is the blocked source that drives the degradation
   scenario.
+- `kepler-board.html` and `kepler-board.json` are an ATS the skill has never
+  heard of, at `{slug}.jobvault.io`. Nothing in `ATS_PATTERNS` matches it, so
+  `discover-a-new-board` has something real to probe. The JSON deliberately uses
+  field names (`headline`, `place`, `arrangement`, `permalink`) that match no
+  shipped recipe, so an agent has to record an actual mapping rather than
+  assuming a familiar shape.
+- `acme-careers.html` is the negative case: one company's own careers page on
+  its own domain. Jobs should be harvested from it, but it must not be recorded
+  as a reusable board type.
 
 All fixture data is synthetic. Ada Lovelace and the companies in these pages are
 invented. Keep the board companies distinct from the employers in the fixture

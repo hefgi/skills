@@ -87,6 +87,7 @@ scripts/pipeline.py boards --boards "$W/profile/boards.md" --add-company lever:p
 | `--tier` | `1` public endpoint, `2` needs the logged-in browser. |
 | `--verified-only` | Skip recipes that have never returned a row. |
 | `--add-company` | `<board>:<slug>`, repeatable. Refuses an unknown board. |
+| `--add-board` | Record a newly discovered board type. Needs `--api` and `--fields`; takes `--board-url`, `--posting-pattern`, `--kind-of`, `--tier-of`, `--verified`, `--notes`. Refuses a name that already exists. |
 | `--format` | `tsv` (default) or `json`. |
 
 Adding is idempotent and rewrites only the `companies:` lines, so hand-written
