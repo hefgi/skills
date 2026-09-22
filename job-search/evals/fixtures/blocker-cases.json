@@ -1,0 +1,196 @@
+{
+  "_comment": "Regression cases from a real sweep, 2026-09-21. The DROP cases all reached the user before the geography and function blockers existed; the KEEP cases are the ones a careless fix breaks. Run them against blocker_for().",
+  "criteria": {
+    "exclude_locations": "United States, Canada, India, Singapore, Australia",
+    "onsite_requires_city": "London",
+    "query_terms_exclude": "account executive, account director, account manager, customer success, business development, partnerships, sales director, head of sales, vp of sales, marketing, pr director, communications, recruiter, talent acquisition, manufacturing engineering",
+    "geography": "London UK, United Kingdom, France, European Union, Ireland, Germany, Netherlands, Spain, Portugal, Poland, Sweden, Denmark, Italy, Belgium, Austria, Finland, Switzerland, Europe, EMEA"
+  },
+  "cases": [
+    {
+      "expect": "location",
+      "company": "Databricks",
+      "role": "Solutions Architect - Public Sector (SLED)",
+      "location": "Remote - Texas",
+      "work_mode": "unknown"
+    },
+    {
+      "expect": "location",
+      "company": "Databricks",
+      "role": "Sr. Forward Deployed Engineer (FDE) - Retail",
+      "location": "Remote - California",
+      "work_mode": "unknown"
+    },
+    {
+      "expect": "location",
+      "company": "Databricks",
+      "role": "Manager, Forward Deployed Engineering - CMEG",
+      "location": "Remote - Washington D.C.",
+      "work_mode": "unknown"
+    },
+    {
+      "expect": "location",
+      "company": "Databricks",
+      "role": "Sr. Engagement Manager, FDE",
+      "location": "Remote - Mexico",
+      "work_mode": "unknown"
+    },
+    {
+      "expect": "location",
+      "company": "Vanta",
+      "role": "Engineering Manager - Reporting",
+      "location": "Remote U.S.",
+      "work_mode": "remote"
+    },
+    {
+      "expect": "location",
+      "company": "Vanta",
+      "role": "Engineering Manager, App Primitives - CAN",
+      "location": "Remote - Canada",
+      "work_mode": "remote"
+    },
+    {
+      "expect": "location",
+      "company": "Anthropic",
+      "role": "Staff Software Engineer, GTM AI Engineering",
+      "location": "Remote-Friendly (Travel-Required) | San Francisco, CA | Seattle, WA",
+      "work_mode": "unknown"
+    },
+    {
+      "expect": "function-excluded",
+      "company": "Cohere",
+      "role": "Customer Success Manager - Public Sector & Defense, France",
+      "location": "Paris, France",
+      "work_mode": "hybrid"
+    },
+    {
+      "expect": "function-excluded",
+      "company": "Cohere",
+      "role": "Head of Sales EMEA, Public Sector",
+      "location": "London, UK",
+      "work_mode": "hybrid"
+    },
+    {
+      "expect": "function-excluded",
+      "company": "Cohere",
+      "role": "PR Director, EMEA",
+      "location": "London, UK",
+      "work_mode": "hybrid"
+    },
+    {
+      "expect": "function-excluded",
+      "company": "Decagon",
+      "role": "Strategic Account Director",
+      "location": "London, UK",
+      "work_mode": "hybrid"
+    },
+    {
+      "expect": "function-excluded",
+      "company": "ElevenLabs",
+      "role": "Public Sector Partnerships - Europe Lead",
+      "location": "London, UK",
+      "work_mode": "hybrid"
+    },
+    {
+      "expect": "function-excluded",
+      "company": "Owen Daniels",
+      "role": "Manufacturing Engineering Manager",
+      "location": "Coventry, England, United Kingdom",
+      "work_mode": "onsite"
+    },
+    {
+      "expect": null,
+      "company": "Anthropic",
+      "role": "Forward Deployed Engineer",
+      "location": "London, UK",
+      "work_mode": "hybrid"
+    },
+    {
+      "expect": null,
+      "company": "Anthropic",
+      "role": "Forward Deployed Engineer",
+      "location": "Paris, France",
+      "work_mode": "hybrid"
+    },
+    {
+      "expect": null,
+      "company": "Databricks",
+      "role": "AI Forward Deployed Engineer - London",
+      "location": "London, United Kingdom",
+      "work_mode": "hybrid"
+    },
+    {
+      "expect": null,
+      "company": "Scale AI",
+      "role": "Applied AI Engineer, Global Public Sector",
+      "location": "Doha, Qatar; London, UK",
+      "work_mode": "hybrid"
+    },
+    {
+      "expect": null,
+      "company": "Invisible Technologies",
+      "role": "Senior Software Engineer (Forward Deployed)",
+      "location": "London - Hybrid; New York - Hybrid; San Francisco - Hybrid",
+      "work_mode": "hybrid"
+    },
+    {
+      "expect": null,
+      "company": "Luma AI",
+      "role": "Forward Deployed Engineer",
+      "location": "Remote, INT",
+      "work_mode": "remote"
+    },
+    {
+      "expect": null,
+      "company": "Vanta",
+      "role": "Solutions Engineer (Upmarket, Pre-Sales) - EMEA",
+      "location": "London, UK",
+      "work_mode": "hybrid"
+    },
+    {
+      "expect": null,
+      "company": "Databricks",
+      "role": "Pre-sales Engineering Manager (Retail & CPG)",
+      "location": "London, United Kingdom",
+      "work_mode": "hybrid"
+    },
+    {
+      "expect": null,
+      "company": "Databricks",
+      "role": "Senior Solutions Engineer (Presales, Technical, Data and AI)",
+      "location": "London, United Kingdom",
+      "work_mode": "hybrid"
+    },
+    {
+      "expect": null,
+      "company": "Telnyx",
+      "role": "Forward Deployed Engineer, UKI",
+      "location": "London, England, UK",
+      "work_mode": "hybrid"
+    },
+    {
+      "expect": null,
+      "company": "Cohere",
+      "role": "Solutions Engineer (Upmarket, Pre-Sales) - EMEA",
+      "location": "London, United Kingdom",
+      "work_mode": "onsite",
+      "_why": "onsite in the user's own city. A case-sensitive compare against onsite_requires_city dropped every one of these."
+    },
+    {
+      "expect": null,
+      "company": "Acme",
+      "role": "Forward Deployed Engineer",
+      "location": "London - Hybrid; New York - Hybrid",
+      "work_mode": "onsite",
+      "_why": "multi-location onsite: acceptable if any location is the right city"
+    },
+    {
+      "expect": "onsite-elsewhere",
+      "company": "Owen Daniels",
+      "role": "Forward Deployed Engineer",
+      "location": "Coventry, England, United Kingdom",
+      "work_mode": "onsite",
+      "_why": "onsite in a reachable country but the wrong city"
+    }
+  ]
+}

@@ -1,0 +1,76 @@
+{
+  "context": "The core sweep. Tests deduplication across three distinct axes (already applied, cross-posted, previously seen), that blockers are dropped with a recorded reason rather than deleted, that no ranking column is introduced, and that the CSV survives a real parser. A pipeline that loses history or silently drops rows cannot be trusted on the next run.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Reconciled against the log first",
+      "max_score": 10,
+      "description": "Reconciled the pipeline against applications/log.csv before evaluating newly harvested jobs, rather than harvesting first and filtering afterwards"
+    },
+    {
+      "name": "Swept every configured source",
+      "max_score": 8,
+      "description": "Visited each of the LinkedIn, Ashby, and Greenhouse fixture boards"
+    },
+    {
+      "name": "Already-applied role marked applied",
+      "max_score": 12,
+      "description": "A role that already appears in applications/log.csv has status applied and a populated applied_date, not new"
+    },
+    {
+      "name": "Cross-post collapsed to one row",
+      "max_score": 12,
+      "description": "The job cross-posted to both LinkedIn and Ashby produced exactly one row, not two"
+    },
+    {
+      "name": "Second URL preserved",
+      "max_score": 8,
+      "description": "That merged row carries the second URL in its notes column, in the form 'also: <url>'"
+    },
+    {
+      "name": "Previously seen row kept its history",
+      "max_score": 12,
+      "description": "The row that already existed in pipeline.csv kept its original first_seen and its existing status, rather than being reset to new, and had only last_seen bumped to the run date"
+    },
+    {
+      "name": "Work-authorization blocker dropped",
+      "max_score": 10,
+      "description": "The posting requiring US work authorization has status dropped with drop_reason us-work-auth"
+    },
+    {
+      "name": "Junior role dropped",
+      "max_score": 8,
+      "description": "The junior or intern-level posting has status dropped with drop_reason junior-ic"
+    },
+    {
+      "name": "Drops retained, not deleted",
+      "max_score": 10,
+      "description": "Dropped rows are still present in pipeline.csv rather than removed from it, so the next run can see what was already ruled out"
+    },
+    {
+      "name": "No ranking column",
+      "max_score": 10,
+      "description": "pipeline.csv contains no column named score, fit, rank, match, or any equivalent numeric ranking. The user's stated position is that anything with a genuine similarity is worth applying to"
+    },
+    {
+      "name": "CSV is well formed",
+      "max_score": 12,
+      "description": "Every data row parses to exactly 16 fields with a standard CSV parser, including any row whose role contains a comma, and every row has a non-empty job_key"
+    },
+    {
+      "name": "Run report written",
+      "max_score": 8,
+      "description": "A run report was written under search/runs/, and it counts the dropped rows by reason"
+    },
+    {
+      "name": "One task space for the sweep",
+      "max_score": 8,
+      "description": "Drove the browser through ego-browser using a single task space for the whole sweep rather than one per source"
+    },
+    {
+      "name": "Did not touch the application side",
+      "max_score": 10,
+      "description": "Nothing was written to applications/, cv/, or qa/"
+    }
+  ]
+}

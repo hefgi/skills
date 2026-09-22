@@ -1,0 +1,14 @@
+version: 1
+created: 2026-09-04
+
+# Behaviour
+auto_submit: false         # evals must never submit
+default_track: fde
+
+# Applying to several postings at once. See orchestration.md.
+max_concurrent_applications: 3
+
+# Output naming. Placeholders: {lastname} {firstname} {company} {role} {track} {date}
+naming:
+  cv: "{lastname}_{company}_{role}"
+  cover_letter: "{lastname}_{company}_CoverLetter"

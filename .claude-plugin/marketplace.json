@@ -35,6 +35,24 @@
       "skills": [
         "./review-workflow"
       ]
+    },
+    {
+      "name": "job-apply",
+      "description": "Tailor a CV and cover letter to a specific job posting and apply to it automatically in the browser, keeping a reusable profile so the same answers are never re-entered",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./job-apply"
+      ]
+    },
+    {
+      "name": "job-search",
+      "description": "Sweep job boards in the browser and build a deduplicated pipeline of roles worth applying to, sharing a workspace with job-apply so a role applied to is never surfaced twice",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./job-search"
+      ]
     }
   ]
 }

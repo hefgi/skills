@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent detects a partially-built workspace and resumes it rather than starting over, preserving files that already exist and re-asking nothing that is already on record. Setup is destructive if done wrong: clobbering cv-base.yaml loses the user's career facts.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Detected the existing workspace",
+      "max_score": 12,
+      "description": "Explicitly reports that a workspace already existed and was incomplete, rather than treating this as a fresh setup"
+    },
+    {
+      "name": "Preserved identity.md",
+      "max_score": 12,
+      "description": "The existing identity.md is not overwritten: name is still Ada Lovelace and email is still ada@example.com"
+    },
+    {
+      "name": "Did not re-ask known facts",
+      "max_score": 10,
+      "description": "Does not ask the user for the name, email, or phone that were already present in identity.md"
+    },
+    {
+      "name": "Filled the identity gaps",
+      "max_score": 8,
+      "description": "The previously empty address_line_1, city, and postcode are filled from what the user supplied"
+    },
+    {
+      "name": "Created the missing profile files",
+      "max_score": 10,
+      "description": "logistics.md, targets.md, narrative.md, and demographics.md all now exist"
+    },
+    {
+      "name": "Built cv-base.yaml",
+      "max_score": 10,
+      "description": "cv/cv-base.yaml exists and contains all seven employers named in the prompt"
+    },
+    {
+      "name": "Created at least one track",
+      "max_score": 8,
+      "description": "At least one file exists under cv/tracks/, matching the forward-deployed-engineer target the user stated"
+    },
+    {
+      "name": "Created the Q&A bank",
+      "max_score": 6,
+      "description": "qa/answers.md and qa/stories.md both exist"
+    },
+    {
+      "name": "Preserved the log header",
+      "max_score": 8,
+      "description": "applications/log.csv still has exactly one header row, not duplicated and not replaced"
+    },
+    {
+      "name": "Logistics recorded correctly",
+      "max_score": 8,
+      "description": "logistics.md records requires_sponsorship as no, notice_period as one month, and a salary expectation around 110000 GBP"
+    },
+    {
+      "name": "Demographics default to declining",
+      "max_score": 6,
+      "description": "demographics.md defaults every field to prefer not to say rather than inventing or pressing for values"
+    },
+    {
+      "name": "Standing decisions recorded as comments",
+      "max_score": 6,
+      "description": "Where the user gave a rule rather than a value, it is written as a # comment above the relevant key rather than lost or buried in prose"
+    }
+  ]
+}

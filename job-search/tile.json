@@ -1,0 +1,11 @@
+{
+  "name": "hefgi/job-search",
+  "version": "0.1.0",
+  "private": false,
+  "summary": "Sweep job boards in the browser and build a deduplicated pipeline of roles worth applying to. Use this skill whenever the user asks to find jobs, search for roles, look for openings, sweep LinkedIn or a job board, refresh or top up their job pipeline, asks what roles are out there right now, or wants to set up their job search criteria. Also use it when the user mentions job hunting, sourcing roles, job boards, LinkedIn job search, Ashby, Greenhouse, Lever, Wellfound, or Y Combinator jobs and they are looking rather than applying. Reads the same workspace as job-apply, so a role already applied to is never surfaced twice. Built on ego lite.",
+  "skills": {
+    "job-search": {
+      "path": "SKILL.md"
+    }
+  }
+}

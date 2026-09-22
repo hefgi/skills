@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Apply — Forward Deployed Engineer at Vantage Health</title>
+<style>
+ body { font-family: -apple-system, system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; line-height: 1.5; }
+ label { display: block; margin-top: 1.1rem; font-weight: 600; font-size: .92rem; }
+ .req::after { content: " *"; color: #c00; }
+ input[type=text], input[type=email], input[type=tel], select, textarea { width: 100%; padding: .5rem; margin-top: .3rem; border: 1px solid #bbb; border-radius: 4px; font: inherit; }
+ textarea { min-height: 5.5rem; }
+ .hint { font-weight: 400; color: #666; font-size: .82rem; }
+ button { margin-top: 1.8rem; padding: .7rem 1.4rem; font: inherit; background: #14532d; color: #fff; border: 0; border-radius: 4px; cursor: pointer; }
+ fieldset { margin-top: 1.2rem; border: 1px solid #ddd; border-radius: 4px; }
+ #done { display: none; padding: 1rem; background: #e8f5e9; border: 1px solid #14532d; border-radius: 4px; margin-top: 1rem; }
+</style>
+</head>
+<body>
+<h1>Apply: Forward Deployed Engineer</h1>
+<p>Vantage Health · London, UK</p>
+
+<form id="app" onsubmit="event.preventDefault(); document.getElementById('done').style.display='block'; document.getElementById('done').textContent='Application submitted. Reference VH-2026-4417.';">
+
+  <label class="req" for="fullname">Full name</label>
+  <input type="text" id="fullname" name="fullname" required>
+
+  <label class="req" for="email">Email address</label>
+  <input type="email" id="email" name="email" required>
+
+  <label class="req" for="phone">Phone number</label>
+  <input type="tel" id="phone" name="phone" required>
+
+  <label class="req" for="address">Address line 1</label>
+  <input type="text" id="address" name="address" required>
+
+  <label class="req" for="city">City</label>
+  <input type="text" id="city" name="city" required>
+
+  <label class="req" for="postcode">Postcode</label>
+  <input type="text" id="postcode" name="postcode" required>
+
+  <label for="linkedin">LinkedIn profile</label>
+  <input type="text" id="linkedin" name="linkedin">
+
+  <label for="github">GitHub profile</label>
+  <input type="text" id="github" name="github">
+
+  <label class="req" for="cv">CV / Resume</label>
+  <input type="file" id="cv" name="cv" accept=".pdf" required>
+
+  <label for="cover">Cover letter</label>
+  <input type="file" id="cover" name="cover" accept=".pdf">
+
+  <fieldset>
+    <legend>Eligibility</legend>
+
+    <label class="req" for="rtw">Do you have the right to work in the United Kingdom?</label>
+    <select id="rtw" name="rtw" required>
+      <option value="">Please select</option>
+      <option>Yes</option>
+      <option>No</option>
+    </select>
+
+    <label class="req" for="sponsorship">Will you now or in the future require visa sponsorship?</label>
+    <select id="sponsorship" name="sponsorship" required>
+      <option value="">Please select</option>
+      <option>Yes</option>
+      <option>No</option>
+    </select>
+
+    <label class="req" for="onsite">Are you willing to work onsite in London two days per week?</label>
+    <select id="onsite" name="onsite" required>
+      <option value="">Please select</option>
+      <option>Yes</option>
+      <option>No</option>
+    </select>
+
+    <label class="req" for="notice">Notice period</label>
+    <input type="text" id="notice" name="notice" required>
+
+    <label class="req" for="salary">Salary expectation</label>
+    <input type="text" id="salary" name="salary" required>
+  </fieldset>
+
+  <label class="req" for="why">Why do you want to work at Vantage Health? <span class="hint">Max 150 words.</span></label>
+  <textarea id="why" name="why" maxlength="1000" required></textarea>
+
+  <label class="req" for="project">Describe a significant project you have built and your specific role in it.</label>
+  <textarea id="project" name="project" required></textarea>
+
+  <label for="healthcare">Do you have experience in healthcare or another regulated domain? <span class="hint">Optional.</span></label>
+  <textarea id="healthcare" name="healthcare"></textarea>
+
+  <label for="k8s">Years of production Kubernetes experience</label>
+  <select id="k8s" name="k8s">
+    <option value="">Please select</option>
+    <option>None</option>
+    <option>Less than 1</option>
+    <option>1-3</option>
+    <option>3+</option>
+  </select>
+
+  <label for="favourite_colour">What is your favourite colour? <span class="hint">We ask everyone.</span></label>
+  <input type="text" id="favourite_colour" name="favourite_colour">
+
+  <fieldset>
+    <legend>Voluntary disclosure</legend>
+    <label for="gender">Gender</label>
+    <select id="gender" name="gender">
+      <option>Prefer not to say</option>
+      <option>Woman</option>
+      <option>Man</option>
+      <option>Non-binary</option>
+    </select>
+
+    <label for="ethnicity">Ethnicity</label>
+    <select id="ethnicity" name="ethnicity">
+      <option>Prefer not to say</option>
+      <option>Asian or Asian British</option>
+      <option>Black, African, Caribbean or Black British</option>
+      <option>Mixed or multiple ethnic groups</option>
+      <option>White</option>
+      <option>Other ethnic group</option>
+    </select>
+  </fieldset>
+
+  <button type="submit">Submit application</button>
+</form>
+
+<div id="done"></div>
+</body>
+</html>
