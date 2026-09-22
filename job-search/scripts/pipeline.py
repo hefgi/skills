@@ -575,6 +575,86 @@ def cmd_mine(args) -> int:
     return 0
 
 
+def cmd_merge(args) -> int:
+    """Concatenate per-agent shard files into one harvest, for `upsert`.
+
+    Under an orchestrated sweep each agent writes its own shard rather than a
+    shared file, because several agents writing one accumulated list means
+    last-writer-wins and every other agent's rows vanish. This puts them back
+    together in one place, so the orchestrator never hand-assembles JSON and the
+    single-upsert rule stays easy to follow.
+
+    Shards are read in sorted filename order so a merge is reproducible. That
+    only decides which URL of a cross-post becomes canonical, since dedup itself
+    is order-independent, but a reproducible merge makes a rerun comparable.
+    """
+    rows: list[dict] = []
+    blocked: list[str] = []
+    slugs: list[str] = []
+    per_shard: list[dict] = []
+
+    paths = sorted(Path(p) for p in args.shard)
+    for path in paths:
+        if not path.exists():
+            die(f"shard not found: {path}")
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            die(f"{path} is not valid JSON: {exc}", 2)
+
+        # A shard is either a bare array of rows, or an object carrying the rows
+        # alongside what the agent could not sweep. Accept both: the bare form
+        # is what a tier-1 agent with nothing to report naturally produces.
+        if isinstance(payload, list):
+            shard_rows, shard_blocked, shard_slugs = payload, [], []
+        elif isinstance(payload, dict):
+            shard_rows = payload.get("rows", [])
+            shard_blocked = payload.get("blocked", [])
+            shard_slugs = payload.get("slugs", [])
+        else:
+            die(f"{path} must hold a JSON array or object", 2)
+
+        if not isinstance(shard_rows, list):
+            die(f"{path}: rows must be an array", 2)
+
+        rows.extend(shard_rows)
+        blocked.extend(shard_blocked)
+        slugs.extend(shard_slugs)
+        per_shard.append({
+            "shard": str(path),
+            "rows": len(shard_rows),
+            "blocked": len(shard_blocked),
+        })
+
+    # Deduplicate the reported slugs and blocked lines, preserving order. Two
+    # agents can legitimately discover the same board.
+    blocked = list(dict.fromkeys(blocked))
+    slugs = list(dict.fromkeys(slugs))
+
+    if args.out:
+        out = Path(args.out)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps(rows, indent=2), encoding="utf-8")
+
+    summary = {
+        "shards": len(paths),
+        "rows": len(rows),
+        "per_shard": per_shard,
+        "blocked": blocked,
+        "slugs": slugs,
+        "out": args.out or None,
+    }
+    # An empty shard is not automatically wrong, but it is worth seeing: it is
+    # what a broken selector and a genuinely quiet board look like alike.
+    summary["empty_shards"] = [s["shard"] for s in per_shard if s["rows"] == 0]
+
+    if args.rows_only:
+        print(json.dumps(rows, indent=2))
+    else:
+        print(json.dumps(summary, indent=2))
+    return 0
+
+
 def cmd_upsert(args) -> int:
     """Merge one sweep's harvest into the pipeline.
 
@@ -944,6 +1024,15 @@ def main() -> int:
     p = sub.add_parser("init", help="create an empty pipeline.csv with the header")
     p.add_argument("--pipeline", required=True)
     p.set_defaults(func=cmd_init)
+
+    p = sub.add_parser("merge", help="concatenate per-agent shard files")
+    p.add_argument("--shard", action="append", required=True,
+                   help="a shard file; repeat once per agent")
+    p.add_argument("--out", help="write the merged rows here, for upsert to read")
+    p.add_argument("--rows-only", action="store_true",
+                   help="print the merged rows instead of the summary, to pipe "
+                        "straight into upsert")
+    p.set_defaults(func=cmd_merge)
 
     p = sub.add_parser("upsert", help="merge a sweep harvest (JSON on stdin)")
     p.add_argument("--pipeline", required=True)

@@ -70,6 +70,34 @@ scripts/pipeline.py key --company "Ash by Slingshot AI" --role "Technical Ex-Fou
 
 Returns `job_key`, `company_key`, `role_key`, and the captured `seniority`.
 
+### merge
+
+Concatenate per-agent shard files into one harvest, for an orchestrated sweep.
+
+```bash
+scripts/pipeline.py merge \
+  --shard "$W/search/runs/<run-id>.ashby.json" \
+  --shard "$W/search/runs/<run-id>.linkedin.json" \
+  --out   "$W/search/runs/<run-id>.merged.json"
+```
+
+| Option | Effect |
+|---|---|
+| `--shard` | Required, repeatable. One per agent. |
+| `--out` | Write the merged rows here for `upsert` to read. |
+| `--rows-only` | Print the rows instead of the summary, to pipe into `upsert`. |
+
+A shard is a bare array of rows, or an object with `rows`, `blocked`, and
+`slugs`. Both are accepted, since a tier 1 agent with nothing to report naturally
+produces the bare form. The summary reports per-shard counts, the deduplicated
+`blocked` and `slugs` lists, and `empty_shards`, which is worth reading: an
+unexpected empty shard is what a broken selector and a quiet board look like
+alike.
+
+Shards are read in sorted filename order so a merge is reproducible. That only
+decides which URL of a cross-post becomes canonical; dedup itself is
+order-independent, so agent completion order cannot change the result.
+
 ### upsert
 
 The main call. Merges one sweep's whole harvest, deduping on all three axes,
