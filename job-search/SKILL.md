@@ -21,14 +21,18 @@ postings to apply to, swept from the boards in their own browser.
 This skill finds jobs. It does not apply to them: a posting in the pipeline is
 handed to `job-apply`, which owns CVs, cover letters, and forms.
 
-## The two workflows
+## The workflows
 
 | The user wants | Workflow | Read |
 |---|---|---|
 | First-time use, or no search criteria exist | Setup | `references/setup.md` |
 | Find jobs now, refresh or top up the pipeline | Sweep | `references/search.md` |
+| Sweep several sources at once | Orchestrate | `references/orchestration.md` |
 
-Both depend on the workspace. Resolve it first.
+Every workflow depends on the workspace. Resolve it first.
+
+`references/orchestration.md` is for the orchestrating agent only. Do not hand it
+to a subagent that is sweeping a single source, or it will fan out again.
 
 Applying to a posting, rather than finding one, is the `job-apply` skill's work.
 The signal is whether there is a posting URL: one URL means apply, no URL and a
@@ -43,6 +47,7 @@ Load these when the moment comes, not up front:
 | Reading or writing `search.md` or `pipeline.csv` | `references/data-schema.md` |
 | Deciding whether two postings are the same job | `references/filters.md` |
 | Handing a found job to `job-apply` | `references/handoff.md` |
+| Sweeping several sources in parallel | `references/orchestration.md` |
 
 ## Step 0: resolve the workspace (always do this first)
 

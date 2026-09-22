@@ -25,9 +25,24 @@ Its `references/data-schema.md` is authoritative for those files.
 └── search/
     ├── pipeline.csv         # every job found, one row each
     └── runs/
-        ├── 2026-09-21-1.md          # the run report
-        └── 2026-09-21-1.partial.json  # scratch, deleted after a clean upsert
+        ├── 2026-09-21-1.md                  # the run report
+        ├── 2026-09-21-1.partial.json        # serial sweep scratch
+        ├── 2026-09-21-1.ashby.json          # fan-out: one shard per agent
+        ├── 2026-09-21-1.linkedin.json
+        └── 2026-09-21-1.merged.json         # what the orchestrator upserts
 ```
+
+Scratch files are deleted after a clean upsert. Under a fan-out run each agent
+owns exactly one shard and writes nothing else, because a single shared file
+means the last writer wins and every other agent's rows vanish. A shard holds
+either a bare array of harvest rows, or an object carrying what the agent could
+not sweep alongside them:
+
+```json
+{"rows": [...], "blocked": ["linkedin: challenge at https://..."], "slugs": ["ashby:hilbert"]}
+```
+
+`pipeline.py merge` accepts both shapes and concatenates them.
 
 ## profile/search.md
 
@@ -200,7 +215,21 @@ rather than a second config file. Absent keys take the defaults shown.
 search:
   max_new_rows_per_run: 60   # 0 disables the cap
   default_track:             # empty sweeps every track
+
+  # Fan-out caps, used only by references/orchestration.md.
+  max_concurrent_sweeps: 6   # tier 1: public JSON APIs, no browser, no session
+  max_concurrent_browser: 3  # tier 2: one task space each, never 2 on a domain
 ```
+
+The two caps are separate because the sources they govern carry different risk,
+not different speed. Tier 1 agents open no browser at all and hit public
+endpoints that are nobody's account, so the only limit is politeness. Tier 2
+agents share the user's logged-in session, where the binding rule is one agent
+per domain rather than any particular total. Setting `max_concurrent_browser`
+above 1 never permits two agents on the same domain.
+
+`0` or `1` in either means do not fan out that tier; sweep it yourself in
+sequence.
 
 **`profile/search.md` wins when the two disagree.** `max_new_rows_per_run`
 appears in both files, because pacing belongs with the other sourcing criteria

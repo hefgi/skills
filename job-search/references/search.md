@@ -18,6 +18,7 @@ job cross-posted to two boards collapse into one row.
 - [Pacing](#pacing)
 - [When a source blocks](#when-a-source-blocks)
 - [Harvest format](#harvest-format)
+- [Messages to an orchestrator](#messages-to-an-orchestrator)
 
 ## Phase A: load and reconcile
 
@@ -145,6 +146,12 @@ invocation is a new process, so nothing in JavaScript persists. Re-serialize the
 full accumulated list rather than appending one source's rows, because a partial
 file that omits earlier sources loses exactly what the checkpoint exists to keep.
 
+**Under a fan-out run, each agent writes its own shard**, named
+`<run-id>.<source>.partial.json`. One shared file would mean every agent writing
+the whole accumulated list to one path, so the last writer wins and everyone
+else's rows vanish silently. The orchestrator concatenates the shards with
+`pipeline.py merge` before the single upsert.
+
 **Checkpoint the blocked sources too.** A blocked source contributes no rows, so
 it exists only in your head between here and the report. If the run dies in
 between, the harvest survives and the blocked list does not, which is the one
@@ -243,8 +250,14 @@ hours of their own browsing, not just this run.
 - **Delay 3 to 6 seconds between LinkedIn page loads**, randomized. A fixed
   cadence is itself a bot signal, so an exact 5-second gap is worse than a
   varying one.
-- **Serial, never parallel.** One request at a time in one tab. Parallel loads
-  against a single session are the fastest route to a challenge page.
+- **Serial within a domain, never two agents on one.** One request at a time
+  against a given site. Concurrent loads against a single session are the
+  fastest route to a challenge page, and every budget and delay on this page is
+  written per *run*: split a domain across two sweepers and the request budget
+  doubles, the randomized delay collapses into a faster aggregate cadence, and
+  the strike counter below stops reaching three. Different domains in parallel
+  are fine, and the public JSON APIs are not a session at all. See
+  `references/orchestration.md` for how a fan-out run keeps this true.
 - **Three strikes per source.** An empty extraction or a timeout is a strike.
   Three retires that source for the run. This stops a sweep grinding against a
   board that has already decided to stop answering.
@@ -310,3 +323,50 @@ and common from a results page. Leave `track` out: it is inferred.
 Put anything the listing said about work authorization into `notes`. That is
 where the `us-work-auth` blocker looks, and a results page occasionally says
 "US-based only" right in the card.
+
+## Messages to an orchestrator
+
+When an orchestrator spawned you to sweep one source, you report to it rather
+than to the user. The formats live here, not in `orchestration.md`, so an agent
+that never sees that file still knows them.
+
+Send `SendMessage(to="<the address in your brief>")`, never to the sender label
+on a message you receive.
+
+**`HARVEST`** when your source is done:
+
+```
+HARVEST | <source>
+shard:    <path to your .partial.json>
+rows:     <count>
+space:    <spaceId, or "none" for a plain-fetch source>
+requests: <how many you used, against the budget you were given>
+notes:    <anything odd: a slug that 404'd, a board that rendered late>
+```
+
+**`BLOCKED`** the moment a source challenges you. Send it and wait:
+
+```
+BLOCKED | <source>
+url:  <the exact URL that blocked>
+kind: challenge | login-wall | throttled
+```
+
+The `kind` matters to the orchestrator, because a challenge is evidence about
+the shared session rather than about you, and it may need to halt other agents.
+
+**`RETIRED`** after three strikes on a source, per the pacing rules above.
+
+**`SLUGS`** for ATS boards you discovered:
+
+```
+SLUGS | ashby:hilbert, greenhouse:euler
+```
+
+Report them rather than writing them. `profile/search.md` is a read-modify-write
+file and concurrent edits clobber each other, so the orchestrator merges once.
+
+**Your scope as a subagent**: sweep the one source you were given, write only
+your own shard, and do not filter. Never run `pipeline.py upsert`, never write
+`search/pipeline.csv` or the run report, never edit `profile/search.md`. One
+place decides what gets dropped, and it is the orchestrator's single upsert.
