@@ -1,0 +1,17 @@
+{
+  "_comment": "Greenhouse-shaped payload carrying the filtering cases from the real 2026-09-21 sweep. Most rows are qualified remote to a US state, which is the shape one large employer writes its whole board in: the bug that put 26 rows from a single company in front of the user. The London rows and the pre-sales rows are the keeps a careless fix breaks.",
+  "jobs": [
+    {"id": 1, "title": "Solutions Architect - Public Sector (SLED)", "absolute_url": "https://job-boards.greenhouse.io/databricks/1", "location": {"name": "Remote - Texas"}, "updated_at": "2026-09-18T10:00:00Z"},
+    {"id": 2, "title": "Sr. Forward Deployed Engineer (FDE) - Retail", "absolute_url": "https://job-boards.greenhouse.io/databricks/2", "location": {"name": "Remote - California"}, "updated_at": "2026-09-18T10:00:00Z"},
+    {"id": 3, "title": "Manager, Forward Deployed Engineering - CMEG", "absolute_url": "https://job-boards.greenhouse.io/databricks/3", "location": {"name": "Remote - Washington D.C."}, "updated_at": "2026-09-18T10:00:00Z"},
+    {"id": 4, "title": "Sr. Engagement Manager, FDE", "absolute_url": "https://job-boards.greenhouse.io/databricks/4", "location": {"name": "Remote - Mexico"}, "updated_at": "2026-09-18T10:00:00Z"},
+    {"id": 5, "title": "AI Forward Deployed Engineer - London", "absolute_url": "https://job-boards.greenhouse.io/databricks/5", "location": {"name": "London, United Kingdom"}, "updated_at": "2026-09-19T10:00:00Z"},
+    {"id": 6, "title": "Pre-sales Engineering Manager (Retail & CPG)", "absolute_url": "https://job-boards.greenhouse.io/databricks/6", "location": {"name": "London, United Kingdom"}, "updated_at": "2026-09-19T10:00:00Z"},
+    {"id": 7, "title": "Senior Solutions Engineer (Presales, Technical, Data and AI)", "absolute_url": "https://job-boards.greenhouse.io/databricks/7", "location": {"name": "London, United Kingdom"}, "updated_at": "2026-09-19T10:00:00Z"},
+    {"id": 8, "title": "Applied AI Engineer, Global Public Sector", "absolute_url": "https://job-boards.greenhouse.io/databricks/8", "location": {"name": "Doha, Qatar; London, UK"}, "updated_at": "2026-09-20T10:00:00Z"},
+    {"id": 9, "title": "Forward Deployed Engineer", "absolute_url": "https://job-boards.greenhouse.io/databricks/9", "location": {"name": "Remote, INT"}, "updated_at": "2026-09-20T10:00:00Z"},
+    {"id": 10, "title": "Staff Software Engineer, GTM AI Engineering", "absolute_url": "https://job-boards.greenhouse.io/databricks/10", "location": {"name": "Remote-Friendly (Travel-Required) | San Francisco, CA | Seattle, WA"}, "updated_at": "2026-09-20T10:00:00Z"},
+    {"id": 11, "title": "Senior Software Engineer (Forward Deployed)", "absolute_url": "https://job-boards.greenhouse.io/databricks/11", "location": {"name": "London - Hybrid; New York - Hybrid; San Francisco - Hybrid"}, "updated_at": "2026-09-20T10:00:00Z"},
+    {"id": 12, "title": "Forward Deployed Engineer, UKI", "absolute_url": "https://job-boards.greenhouse.io/databricks/12", "location": {"name": ""}, "updated_at": "2026-09-20T10:00:00Z"}
+  ]
+}

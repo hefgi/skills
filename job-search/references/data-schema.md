@@ -199,7 +199,7 @@ rows to stay blank.
 | `url` | The posting URL, query string stripped |
 | `platform` | Which system the application is actually made through: `ashby`, `greenhouse`, `linkedin`, `lever`, `workable`, `teamtailor`, `rippling`, `icims`, `workday`, `direct`, `other`, or a newly discovered board's `name`. Shares `applications/log.csv`'s vocabulary so a row crossing to `job-apply` needs no translation, and extends with it: a board worth sweeping is a board worth naming. |
 | `location` | As advertised |
-| `work_mode` | `remote`, `hybrid`, `onsite`, `unknown` |
+| `work_mode` | `remote`, `hybrid`, `onsite`, `unknown`. Set `onsite` only when the posting says so in words. A board reporting a boolean "is remote" gives `remote` or `unknown`, never `onsite`: false means it was not advertised as remote, not that an office is required, and the difference decides whether the `onsite-elsewhere` blocker deletes the row. |
 | `track` | `fde`, `leadership`, or `both`. `both` is a real answer, not a failure: "Head of Forward Deployed Engineering" genuinely fits either, and `job-apply` resolves it against the posting text. |
 | `source` | Which source found it first. Any board `name` from `profile/boards.md`, plus `career-pages` for a company's own site. This is deliberately open: the directory grows, so a column recording which sweep found a row has to grow with it. |
 | `status` | See the lifecycle below |

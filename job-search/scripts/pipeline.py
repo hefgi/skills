@@ -572,9 +572,16 @@ def blocker_for(job: dict, criteria: dict) -> str | None:
     if blocked_location(location, (job.get("work_mode") or "").lower(), criteria):
         return "location"
 
-    onsite_city = (criteria.get("onsite_requires_city") or "").strip().lower()
+    onsite_city = (criteria.get("onsite_requires_city") or "").strip()
     if onsite_city and (job.get("work_mode") or "").lower() == "onsite" and location:
-        if onsite_city not in location:
+        # Case-insensitive and on word boundaries, like every other location
+        # test here. A case-sensitive compare drops every onsite role in the
+        # user's own city, which is the worst possible direction for this
+        # blocker to fail in: it is silent, and it removes the roles they most
+        # want. A multi-location posting is onsite-acceptable if any of its
+        # locations is the right city.
+        if not any(location_mentions(part, onsite_city)
+                   for part in location_parts(location)):
             return "onsite-elsewhere"
 
     company_norm = normalize_company(job.get("company", ""))
@@ -993,8 +1000,16 @@ def cmd_upsert(args) -> int:
         harvest = json.load(sys.stdin)
     except json.JSONDecodeError as exc:
         die(f"harvest on stdin is not valid JSON: {exc}", 2)
+    if isinstance(harvest, dict) and isinstance(harvest.get("rows"), list):
+        # search.md tells a sweep to checkpoint as {"rows": [...], "blocked":
+        # [...]} so the blocked list survives a crash, then feed the partial to
+        # upsert. Accept that shape rather than making every caller remember to
+        # extract .rows first: refusing the format this skill documents is a
+        # papercut that costs a run.
+        harvest = harvest["rows"]
     if not isinstance(harvest, list):
-        die("harvest must be a JSON array of job objects", 2)
+        die("harvest must be a JSON array of job objects, or an object with a "
+            "rows array", 2)
 
     pipeline_path = Path(args.pipeline)
     criteria = parse_criteria(Path(args.criteria)) if args.criteria else {}

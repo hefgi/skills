@@ -1,6 +1,6 @@
 # job-search evals
 
-Five scenarios, one directory each, holding a `task.md` (the prompt given to an
+Six scenarios, one directory each, holding a `task.md` (the prompt given to an
 agent with the skill available) and a `criteria.json` (a weighted checklist for
 scoring the result). Same layout as the other skills in this repo.
 
@@ -11,6 +11,7 @@ scoring the result). Same layout as the other skills in this repo.
 | `sweep-degrades-on-blocked-source` | Carrying on when a board blocks the sweep | yes |
 | `sweep-orchestrated-fan-out` | Parallel sweep: shards, one agent per domain, a single upsert | yes |
 | `discover-a-new-board` | Turning a posting URL into a reusable board in the directory | yes |
+| `sweep-filters-unreachable-and-offtrack` | Dropping roles the user cannot take or does not want, without taking the pre-sales engineering roles with them | yes |
 
 ## Running
 
@@ -33,6 +34,21 @@ cp -R evals/fixtures/workspace /tmp/search-eval
 
 The browser scenarios need ego lite installed and onboarded. See Prerequisites
 in `SKILL.md`.
+
+## Unit-level regression
+
+`fixtures/blocker-cases.json` holds 23 real postings from the 2026-09-21 sweep
+with the drop reason each should produce. Run them directly, no browser and no
+agent:
+
+```bash
+scripts/test_blockers.py
+```
+
+Every DROP case reached the user before the geography and function blockers
+existed. Every KEEP case is one a careless fix breaks, and the pre-sales rows
+are the sharpest: a bare `sales` exclusion removes all three, which is worse
+than the original bug. Run this before and after any change to `blocker_for()`.
 
 ## Fixtures
 

@@ -1,0 +1,66 @@
+{
+  "context": "The filtering defects a real sweep exposed. 31 unreachable rows and 17 wrong-profession rows reached the user as actionable, and nothing errored. Both classes have a tempting wrong fix: matching the bare word remote catches every qualified-remote US posting, and excluding anything containing sales removes the pre-sales engineering roles the user wants. This tests that a sweep drops the right rows, keeps the discriminating ones, and reports a judgement call visibly enough that the user can overrule it.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Qualified remote dropped",
+      "max_score": 14,
+      "description": "A posting whose location is Remote plus a place the user cannot work in, such as Remote - Texas or Remote - California, is dropped with drop_reason location. These are location requirements, not remote roles"
+    },
+    {
+      "name": "work_mode remote did not rescue a US-only row",
+      "max_score": 12,
+      "description": "A row with work_mode remote and a location of Remote U.S. or Remote - Canada is still dropped. A remote role at a US company and a role requiring you to be in the US are different things, and work_mode does not distinguish them"
+    },
+    {
+      "name": "Subdivision matched against a country exclusion",
+      "max_score": 10,
+      "description": "A US state or Canadian province in the location matched the United States or Canada entry in exclude_locations, even though exclude_locations names only countries"
+    },
+    {
+      "name": "Unqualified remote kept",
+      "max_score": 12,
+      "description": "Remote, Remote - Global, Remote - EMEA and Remote, INT are kept. These are genuinely location-independent, and dropping them is the overcorrection this filter invites"
+    },
+    {
+      "name": "Multi-location posting kept on one reachable location",
+      "max_score": 12,
+      "description": "Doha, Qatar; London, UK and London - Hybrid; New York - Hybrid; San Francisco - Hybrid are kept, because one listed location is London. Testing the whole string as one blob drops both"
+    },
+    {
+      "name": "Off-profession roles dropped",
+      "max_score": 12,
+      "description": "Head of Sales EMEA, PR Director, Strategic Account Director, Customer Success Manager and Manufacturing Engineering Manager are dropped with drop_reason function-excluded"
+    },
+    {
+      "name": "Pre-sales engineering roles kept",
+      "max_score": 14,
+      "description": "Solutions Engineer (Upmarket, Pre-Sales), Pre-sales Engineering Manager and Senior Solutions Engineer (Presales) are kept. This is the discriminating case: a bare sales exclusion removes all three, which is worse than the original bug"
+    },
+    {
+      "name": "Dropped rows retained with a reason",
+      "max_score": 10,
+      "description": "Every dropped row is still in pipeline.csv with its drop_reason, not deleted. A later sweep must not rediscover and re-evaluate it"
+    },
+    {
+      "name": "Profession drops named individually",
+      "max_score": 10,
+      "description": "The run report lists function-excluded rows by company and role rather than only counting them. Unlike a location this encodes a judgement that can be wrong, and the user can only overrule a drop they can see"
+    },
+    {
+      "name": "Empty location did not cause a drop",
+      "max_score": 8,
+      "description": "A posting with no location is kept rather than dropped. A results page often omits it, and a false keep costs a glance while a false drop costs a job"
+    },
+    {
+      "name": "Filtering left to upsert",
+      "max_score": 8,
+      "description": "The sweep harvested locations verbatim and let upsert apply the blockers, rather than filtering during extraction. One place deciding what gets dropped is what makes the run report's counts true"
+    },
+    {
+      "name": "Reported what was dropped and why",
+      "max_score": 8,
+      "description": "Told the user the drop counts by reason, so a filter that is too aggressive is visible rather than silently shrinking the pipeline"
+    }
+  ]
+}

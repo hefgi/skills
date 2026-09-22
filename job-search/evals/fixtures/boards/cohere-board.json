@@ -1,0 +1,13 @@
+{
+  "_comment": "Ashby-shaped payload carrying the off-profession cases. Every role here is at a company the user genuinely targets and in a location they can work, so location cannot be what removes them: only query_terms_exclude can. The Solutions Engineer row is the keep that a bare 'sales' exclusion would take with it.",
+  "jobs": [
+    {"title": "Customer Success Manager - Public Sector & Defense, France", "location": "Paris, France", "isRemote": false, "jobUrl": "https://jobs.ashbyhq.com/cohere/c1"},
+    {"title": "Head of Sales EMEA, Public Sector", "location": "London, United Kingdom", "isRemote": false, "jobUrl": "https://jobs.ashbyhq.com/cohere/c2"},
+    {"title": "PR Director, EMEA", "location": "London, United Kingdom", "isRemote": false, "jobUrl": "https://jobs.ashbyhq.com/cohere/c3"},
+    {"title": "Strategic Account Director", "location": "London, United Kingdom", "isRemote": false, "jobUrl": "https://jobs.ashbyhq.com/cohere/c4"},
+    {"title": "Public Sector Partnerships - Europe Lead", "location": "London, United Kingdom", "isRemote": false, "jobUrl": "https://jobs.ashbyhq.com/cohere/c5"},
+    {"title": "Manufacturing Engineering Manager", "location": "Coventry, England, United Kingdom", "isRemote": false, "jobUrl": "https://jobs.ashbyhq.com/cohere/c6"},
+    {"title": "Solutions Engineer (Upmarket, Pre-Sales) - EMEA", "location": "London, United Kingdom", "isRemote": false, "jobUrl": "https://jobs.ashbyhq.com/cohere/c7"},
+    {"title": "Forward Deployed Engineer", "location": "London, United Kingdom", "isRemote": false, "jobUrl": "https://jobs.ashbyhq.com/cohere/c8"}
+  ]
+}

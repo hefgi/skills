@@ -81,6 +81,14 @@ function reachable(location) {
 }
 ```
 
+**A board that only says "not remote" yields `unknown`, never `onsite`.** Ashby
+and others expose a boolean `isRemote`. False means the board did not advertise
+it as remote; it does not mean the role requires an office in that city. Writing
+`onsite` there is a claim the source never made, and it feeds the
+`onsite-elsewhere` blocker, which drops anything outside the user's own city. So
+a guess in this field silently deletes rows. Map `true` to `remote` and `false`
+to `unknown`, and set `onsite` only when the posting says so in words.
+
 **Match on word boundaries, not substrings.** `uk` as a substring matches inside
 unrelated words. It is the same class of bug as the bare `remote` token.
 
