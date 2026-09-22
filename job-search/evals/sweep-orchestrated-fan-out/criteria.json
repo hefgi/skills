@@ -1,0 +1,81 @@
+{
+  "context": "The orchestrated sweep. Tests that fan-out preserves every invariant the serial sweep relies on: one shard per agent rather than a shared file, one agent per domain so the pacing rules keep meaning what they say, a single upsert so dedup stays deterministic, and the orchestrator owning every shared write. A parallel sweep that loses rows or double-counts a domain's budget is worse than a slow serial one, because both failures are silent.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Reconciled before spawning",
+      "max_score": 8,
+      "description": "Ran reconcile against applications/log.csv once, in the orchestrator, before any subagent was spawned, rather than leaving it to an agent or doing it after the merge"
+    },
+    {
+      "name": "Wrote a dated run brief",
+      "max_score": 8,
+      "description": "Wrote a brief under .job-apply/briefs/ with a dated filename, and the brief points subagents at search.md and sources.md rather than restating their rules"
+    },
+    {
+      "name": "Brief carries a real return address",
+      "max_score": 8,
+      "description": "The brief and the spawn prompts give subagents the same concrete address to report to, and tell them not to reply to the sender label on an incoming message"
+    },
+    {
+      "name": "Tier 1 agents opened no task space",
+      "max_score": 12,
+      "description": "The agents assigned to the Ashby and Greenhouse JSON endpoints used plain fetch and did not create an ego-browser task space. Those endpoints need no session, and opening a space is what would couple them to the shared cookie jar"
+    },
+    {
+      "name": "One agent per domain",
+      "max_score": 14,
+      "description": "Exactly one agent was assigned to LinkedIn. No two agents swept the same domain concurrently, since splitting a domain multiplies its request budget, collapses the randomized delay into a faster aggregate cadence, and stops the three-strikes counter reaching three"
+    },
+    {
+      "name": "One shard per agent, never a shared file",
+      "max_score": 14,
+      "description": "Each agent wrote its own <run-id>.<source>.partial.json and nothing else. No two agents wrote the same path, which would mean last-writer-wins and silent row loss"
+    },
+    {
+      "name": "Upsert ran exactly once",
+      "max_score": 14,
+      "description": "pipeline.py upsert was invoked a single time, by the orchestrator, over the merged harvest. No subagent ran upsert. Concurrent upserts read-modify-write and the second discards the first"
+    },
+    {
+      "name": "Cross-agent cross-post collapsed to one row",
+      "max_score": 14,
+      "description": "The Hilbert Systems Forward Deployed Engineer role, found independently by the LinkedIn agent and the Ashby agent under different URLs, produced exactly one row in pipeline.csv, with the second URL preserved in notes as 'also: <url>'"
+    },
+    {
+      "name": "Result matches a serial sweep",
+      "max_score": 10,
+      "description": "The resulting rows are what a single serial sweep over the same harvest would have produced. Agent completion order did not change which jobs are in the pipeline"
+    },
+    {
+      "name": "Orchestrator owned every shared write",
+      "max_score": 12,
+      "description": "Only the orchestrator wrote search/pipeline.csv, the run report, and profile/search.md. Subagents reported discovered ATS slugs rather than editing known_company_boards, which is a read-modify-write that clobbers under concurrency"
+    },
+    {
+      "name": "Subagents did not filter",
+      "max_score": 8,
+      "description": "Agents returned everything with title similarity and left blockers, log dedup, and duplicate detection to the single upsert, so the run report's counts are true"
+    },
+    {
+      "name": "Reviewed each harvest before accepting",
+      "max_score": 10,
+      "description": "Checked returned batches for extraction sanity rather than accepting them blind. A batch where every row lacks a location is a broken selector, not a set of location-less jobs, and that failure silently drops the text the us-work-auth blocker reads"
+    },
+    {
+      "name": "Blocked reported as blocked, not empty",
+      "max_score": 10,
+      "description": "A source that was challenged or hit a login wall appears in the run report as blocked with its URL, distinct from a source that was swept and returned nothing"
+    },
+    {
+      "name": "Reported per-source coverage honestly",
+      "max_score": 8,
+      "description": "Said which sources were actually swept and which were not. A fan-out run that quietly covered four of five sources reads the same as one that covered all five"
+    },
+    {
+      "name": "Did not touch the application side",
+      "max_score": 8,
+      "description": "Nothing was written to applications/, cv/, or qa/, and no application form was opened or submitted"
+    }
+  ]
+}

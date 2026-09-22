@@ -1,6 +1,6 @@
 # job-search evals
 
-Three scenarios, one directory each, holding a `task.md` (the prompt given to an
+Four scenarios, one directory each, holding a `task.md` (the prompt given to an
 agent with the skill available) and a `criteria.json` (a weighted checklist for
 scoring the result). Same layout as the other skills in this repo.
 
@@ -9,6 +9,7 @@ scoring the result). Same layout as the other skills in this repo.
 | `setup-mines-past-applications` | Deriving search criteria from an existing workspace instead of interviewing | no |
 | `sweep-dedups-across-three-axes` | The core sweep: dedup, drops, CSV integrity | yes |
 | `sweep-degrades-on-blocked-source` | Carrying on when a board blocks the sweep | yes |
+| `sweep-orchestrated-fan-out` | Parallel sweep: shards, one agent per domain, a single upsert | yes |
 
 ## Running
 
