@@ -8,7 +8,7 @@ A collection of AI coding agent skills for various tools and services.
 |-------|-------------|------------|-------|
 | [shortcut](./shortcut/) | Interact with Shortcut stories and epics via the `short` CLI | `/shortcut` | [![tessl](https://img.shields.io/endpoint?url=https%3A%2F%2Fapi.tessl.io%2Fv1%2Fbadges%2Fhefgi%2Fshortcut)](https://tessl.io/registry/hefgi/shortcut) |
 | [ponder](./ponder/) | Build EVM blockchain data indexers using Ponder (ponder.sh) | `/ponder` | [![tessl](https://img.shields.io/endpoint?url=https%3A%2F%2Fapi.tessl.io%2Fv1%2Fbadges%2Fhefgi%2Fponder)](https://tessl.io/registry/hefgi/ponder) |
-| [convergent-review](./convergent-review/) | Iterative code-review loop until the review comes back clean | `/convergent-review` | [![tessl](https://img.shields.io/endpoint?url=https%3A%2F%2Fapi.tessl.io%2Fv1%2Fbadges%2Fhefgi%2Fconvergent-review)](https://tessl.io/registry/hefgi/convergent-review) |
+| [convergent-review](./convergent-review/) | Review → fix → re-review loop until clean, through a code lens, a security lens, or both | `/convergent-review` | [![tessl](https://img.shields.io/endpoint?url=https%3A%2F%2Fapi.tessl.io%2Fv1%2Fbadges%2Fhefgi%2Fconvergent-review)](https://tessl.io/registry/hefgi/convergent-review) |
 
 ## Installation
 

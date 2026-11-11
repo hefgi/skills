@@ -29,7 +29,7 @@
     },
     {
       "name": "convergent-review",
-      "description": "Iterative code-review loop — review the diff, fix critical/major/minor issues, commit each round, re-review until clean. Project-agnostic.",
+      "description": "Review -> fix -> re-review loop until clean, through a code lens, a security lens, or both in the same round. Project-agnostic.",
       "source": "./",
       "strict": false,
       "skills": [
