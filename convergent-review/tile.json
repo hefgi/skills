@@ -1,0 +1,11 @@
+{
+  "name": "hefgi/convergent-review",
+  "version": "2.0.0",
+  "private": false,
+  "summary": "Iterative review loop until clean — reviews the diff through a code lens, a security lens, or both in the same round; Claude fixes the enforced severities per lens, commits each round, and re-reviews until every lens is clean. Project-agnostic, any git repo.",
+  "skills": {
+    "convergent-review": {
+      "path": "SKILL.md"
+    }
+  }
+}

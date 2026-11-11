@@ -1,0 +1,11 @@
+{
+  "name": "hefgi/adversarial-review",
+  "version": "1.0.0",
+  "private": false,
+  "summary": "Try to break a diff: threat-model it, send attacker agents at each surface, prove attacks with failing tests, contest the rest before a judge, fix with regression tests, then re-attack the fixes. Ends with a residual-risk report. Project-agnostic, any git repo.",
+  "skills": {
+    "adversarial-review": {
+      "path": "SKILL.md"
+    }
+  }
+}
