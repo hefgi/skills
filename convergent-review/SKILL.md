@@ -1,5 +1,5 @@
 ---
-name: review-workflow
+name: convergent-review
 description: >
   Run an iterative code-review loop: a review workflow scores the diff by severity,
   Claude fixes the issues at the chosen strictness, commits, then re-reviews — looping
@@ -11,7 +11,7 @@ description: >
   when the user asks to review-and-fix in a loop, do a feedback pass, or "keep
   reviewing until clean".
 invocations:
-  - /review-workflow
+  - /convergent-review
 tags:
   - code-review
   - workflow
@@ -20,7 +20,7 @@ tags:
 version: 1.3.0
 ---
 
-# Review Workflow Skill
+# Convergent Review
 
 Run an iterative **review → fix → commit → re-review** loop until a code review comes back clean.
 
@@ -31,7 +31,7 @@ subagents run in isolated contexts. So the loop is split:
 
 | Step | Who |
 |------|-----|
-| Review the diff → verified, severity-graded findings | **the bundled workflow** (`references/review-loop.mjs`) |
+| Review the diff → verified, severity-graded findings | **the bundled workflow** (`references/convergent-review.mjs`) |
 | Apply the fixes | **you (the main agent)** |
 | Commit round N | **you (the main agent)** |
 | Re-review (round N+1) | **the bundled workflow** |
@@ -44,20 +44,20 @@ directly from this skill's bundled path — **nothing is written into the user's
 
 ## Instructions
 
-When invoked with `/review-workflow $ARGUMENTS`:
+When invoked with `/convergent-review $ARGUMENTS`:
 
 ### 1. Prerequisites
 
 - Confirm this is a git repo (`git rev-parse --git-dir`). If not, tell the user and STOP.
 - Determine the current branch. If on `main`/`master`, create a working branch first (do not commit review
   fixes onto the default branch).
-- Resolve the absolute path to this skill's bundled workflow (`references/review-loop.mjs`, next to this
+- Resolve the absolute path to this skill's bundled workflow (`references/convergent-review.mjs`, next to this
   `SKILL.md`) — you need it for the `Workflow` call below. The install location varies (global
   `~/.claude/`, tessl's `~/.agents/skills/` which `~/.claude/skills/` symlinks to, or a project checkout),
   so locate it rather than assuming. `-L` follows the tessl symlinks; trusted roots are searched before the
   cwd so a project-local copy can't shadow the installed one:
   ```bash
-  find -L ~/.claude ~/.agents . -type f -path '*review-workflow/references/review-loop.mjs' 2>/dev/null | head -1
+  find -L ~/.claude ~/.agents . -type f -path '*convergent-review/references/convergent-review.mjs' 2>/dev/null | head -1
   ```
   Use the returned absolute path as `scriptPath`. If nothing is found, tell the user the skill's workflow
   file is missing and STOP.
@@ -163,7 +163,7 @@ Track `tierRound` (the round number **within the current tier**, reset to 0 when
 1. **Review** — increment both counters (`++tierRound`, `++globalRound`), then call the bundled workflow:
    ```
    Workflow({
-     scriptPath: "<this-skill-dir>/references/review-loop.mjs",
+     scriptPath: "<this-skill-dir>/references/convergent-review.mjs",
      args: { scopeMode, round: globalRound, paths, reviewModel: tier, reviewerAgentType }
      // reviewerAgentType from step 1 (omit/undefined → workflow uses general-purpose).
      // include base only if the user pinned one; mechanicsModel defaults to haiku.

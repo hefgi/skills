@@ -1,5 +1,5 @@
 export const meta = {
-  name: 'review-loop',
+  name: 'convergent-review',
   description: 'Adversarial multi-dimension review of a diff; verify findings, return them by severity. One round — invoke again after fixes (bump args.round) to continue the loop.',
   whenToUse:
     'Reviewing a branch/PR diff or working-tree changes for bugs and quality. Fans out reviewers by dimension, adversarially verifies each finding to drop false positives, and returns findings by severity plus counts. Runs one round; invoke again after applying fixes (bump args.round) to continue. Project-agnostic — no repo-specific rules.',

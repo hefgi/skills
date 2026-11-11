@@ -22,7 +22,7 @@ jobs:
     outputs:
       shortcut: ${{ steps.filter.outputs.shortcut }}
       ponder: ${{ steps.filter.outputs.ponder }}
-      review-workflow: ${{ steps.filter.outputs.review-workflow }}
+      convergent-review: ${{ steps.filter.outputs.convergent-review }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
@@ -33,8 +33,8 @@ jobs:
               - 'shortcut/**'
             ponder:
               - 'ponder/**'
-            review-workflow:
-              - 'review-workflow/**'
+            convergent-review:
+              - 'convergent-review/**'
 
   publish-shortcut:
     needs: changes
@@ -58,13 +58,13 @@ jobs:
           token: ${{ secrets.TESSL_API_TOKEN }}
           path: './ponder'
 
-  publish-review-workflow:
+  publish-convergent-review:
     needs: changes
-    if: needs.changes.outputs.review-workflow == 'true'
+    if: needs.changes.outputs.convergent-review == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: tesslio/publish@main
         with:
           token: ${{ secrets.TESSL_API_TOKEN }}
-          path: './review-workflow'
+          path: './convergent-review'
