@@ -35,6 +35,15 @@
       "skills": [
         "./convergent-review"
       ]
+    },
+    {
+      "name": "adversarial-review",
+      "description": "Try to break a diff: threat-model it, attack each surface, prove attacks with failing tests, fix with regression tests, re-attack the fixes. Project-agnostic.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./adversarial-review"
+      ]
     }
   ]
 }

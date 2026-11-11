@@ -23,6 +23,7 @@ jobs:
       shortcut: ${{ steps.filter.outputs.shortcut }}
       ponder: ${{ steps.filter.outputs.ponder }}
       convergent-review: ${{ steps.filter.outputs.convergent-review }}
+      adversarial-review: ${{ steps.filter.outputs.adversarial-review }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
@@ -35,6 +36,8 @@ jobs:
               - 'ponder/**'
             convergent-review:
               - 'convergent-review/**'
+            adversarial-review:
+              - 'adversarial-review/**'
 
   publish-shortcut:
     needs: changes
@@ -68,3 +71,14 @@ jobs:
         with:
           token: ${{ secrets.TESSL_API_TOKEN }}
           path: './convergent-review'
+
+  publish-adversarial-review:
+    needs: changes
+    if: needs.changes.outputs.adversarial-review == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: tesslio/publish@main
+        with:
+          token: ${{ secrets.TESSL_API_TOKEN }}
+          path: './adversarial-review'

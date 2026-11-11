@@ -9,6 +9,7 @@ A collection of AI coding agent skills for various tools and services.
 | [shortcut](./shortcut/) | Interact with Shortcut stories and epics via the `short` CLI | `/shortcut` | [![tessl](https://img.shields.io/endpoint?url=https%3A%2F%2Fapi.tessl.io%2Fv1%2Fbadges%2Fhefgi%2Fshortcut)](https://tessl.io/registry/hefgi/shortcut) |
 | [ponder](./ponder/) | Build EVM blockchain data indexers using Ponder (ponder.sh) | `/ponder` | [![tessl](https://img.shields.io/endpoint?url=https%3A%2F%2Fapi.tessl.io%2Fv1%2Fbadges%2Fhefgi%2Fponder)](https://tessl.io/registry/hefgi/ponder) |
 | [convergent-review](./convergent-review/) | Review → fix → re-review loop until clean, through a code lens, a security lens, or both | `/convergent-review` | [![tessl](https://img.shields.io/endpoint?url=https%3A%2F%2Fapi.tessl.io%2Fv1%2Fbadges%2Fhefgi%2Fconvergent-review)](https://tessl.io/registry/hefgi/convergent-review) |
+| [adversarial-review](./adversarial-review/) | Try to break a diff: attack it, prove attacks with failing tests, fix, re-attack the fixes | `/adversarial-review` | [![tessl](https://img.shields.io/endpoint?url=https%3A%2F%2Fapi.tessl.io%2Fv1%2Fbadges%2Fhefgi%2Fadversarial-review)](https://tessl.io/registry/hefgi/adversarial-review) |
 
 ## Installation
 
@@ -25,6 +26,7 @@ claude plugin install <skill-name>
 npx tessl i hefgi/shortcut
 npx tessl i hefgi/ponder
 npx tessl i hefgi/convergent-review
+npx tessl i hefgi/adversarial-review
 ```
 
 ### Using Skills.sh
@@ -33,6 +35,7 @@ npx tessl i hefgi/convergent-review
 npx skills add https://github.com/hefgi/skills --skill shortcut
 npx skills add https://github.com/hefgi/skills --skill ponder
 npx skills add https://github.com/hefgi/skills --skill convergent-review
+npx skills add https://github.com/hefgi/skills --skill adversarial-review
 ```
 
 ## Adding a New Skill
